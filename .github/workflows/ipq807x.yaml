@@ -48,34 +48,143 @@ jobs:
           ./scripts/feeds install -a
       - name: Generate config for IPQ807x Generic
         run: |
-          echo "CONFIG_TARGET_ipq807x=y" > .config
-          echo "CONFIG_TARGET_ipq807x_generic=y\n" >> .config
-          echo "CONFIG_TARGET_MULTI_PROFILE=y\n" >> .config
-          echo "CONFIG_TARGET_ALL_PROFILES=y\n" >> .config
-          echo "CONFIG_TARGET_PER_DEVICE_ROOTFS=y\n" >> .config
-          echo "CONFIG_TARGET_ROOTFS_INITRAMFS=y\n" >> .config
-          echo "CONFIG_TARGET_INITRAMFS_COMPRESSION_ZSTD=y\n" >> .config
-          echo "CONFIG_PACKAGE_luci=y\n" >> .config
-          #echo "CONFIG_PACKAGE_nss-firmware-ipq8074=y\n" >> .config
+          echo 'CONFIG_TARGET_ipq807x=y' > .config
+          echo 'CONFIG_TARGET_ipq807x_generic=y' >> .config
+          echo 'CONFIG_TARGET_ipq807x_generic_DEVICE_xiaomi_ax3600=y' >> .config
+          echo 'CONFIG_HAS_SUBTARGETS=y' >> .config
+          echo 'CONFIG_TARGET_BOARD="ipq807x"' >> .config
+          echo 'CONFIG_TARGET_SUBTARGET="generic"' >> .config
+          echo 'CONFIG_TARGET_PROFILE="DEVICE_xiaomi_ax3600"' >> .config
+          echo 'CONFIG_TARGET_ARCH_PACKAGES="aarch64_cortex-a53"' >> .config
+          echo 'CONFIG_DEFAULT_TARGET_OPTIMIZATION="-Os -pipe -mcpu=cortex-a53"' >> .config
+          echo 'CONFIG_TARGET_ROOTFS_INITRAMFS=y' >> .config
+          echo 'CONFIG_TARGET_INITRAMFS_COMPRESSION_ZSTD=y' >> .config
+          echo 'CONFIG_TARGET_ROOTFS_SQUASHFS=y' >> .config
+          echo 'CONFIG_TARGET_SQUASHFS_BLOCK_SIZE=256' >> .config
+          echo 'CONFIG_TARGET_UBIFS_FREE_SPACE_FIXUP=y' >> .config
+          echo 'CONFIG_TARGET_OPTIMIZATION="-Os -pipe -mcpu=cortex-a53"' >> .config
+          #
+          ########## Config minimal ##########
+          #
+          echo "CONFIG_PACKAGE_cgi-io=y" >> .config
           echo "CONFIG_PACKAGE_kmod-qca-nss-dp=y" >> .config
-          #echo "CONFIG_PACKAGE_kmod-qca-nss-drv-pppoe=y\n" >> .config
-          #echo "CONFIG_PACKAGE_kmod-qca-nss-ecm=y\n" >> .config
-          #echo "CONFIG_PACKAGE_kmod-qca-nss-drv-bridge-mgr=y\n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-openvpn=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-qca-ssdk-nohnat=y" >> .config
+          echo "CONFIG_PACKAGE_libiwinfo-lua=y" >> .config
+          echo "CONFIG_PACKAGE_liblua=y" >> .config
+          echo "CONFIG_PACKAGE_liblucihttp=y" >> .config
+          echo "CONFIG_PACKAGE_liblucihttp-lua=y" >> .config          
+          echo "CONFIG_PACKAGE_libubus-lua=y" >> .config
+          echo "CONFIG_PACKAGE_lua=y" >> .config
+          echo "CONFIG_PACKAGE_luci=y" >> .config        
+          echo "CONFIG_PACKAGE_luci-app-firewall=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-opkg=y" >> .config          
+          echo "CONFIG_PACKAGE_luci-base=y" >> .config
+          echo "CONFIG_PACKAGE_luci-lib-base=y" >> .config   
+          echo "CONFIG_PACKAGE_luci-lib-ip=y" >> .config         
+          echo "CONFIG_PACKAGE_luci-lib-jsonc=y" >> .config       
+          echo "CONFIG_PACKAGE_luci-lib-nixio=y" >> .config  
+          echo "CONFIG_PACKAGE_luci-mod-admin-full=y" >> .config          
+          echo "CONFIG_PACKAGE_luci-mod-network=y" >> .config
+          echo "CONFIG_PACKAGE_luci-mod-status=y" >> .config
+          echo "CONFIG_PACKAGE_luci-mod-system=y" >> .config
+          echo "CONFIG_PACKAGE_luci-proto-ipv6=y" >> .config
+          echo "CONFIG_PACKAGE_luci-proto-ppp=y" >> .config          
+          echo "CONFIG_PACKAGE_luci-theme-bootstrap=y" >> .config          
+          echo "CONFIG_PACKAGE_qca-ssdk-shell=y" >> .config          
+          echo "CONFIG_PACKAGE_rpcd=y" >> .config
+          echo "CONFIG_PACKAGE_rpcd-mod-file=y" >> .config
+          echo "CONFIG_PACKAGE_rpcd-mod-iwinfo=y" >> .config
+          echo "CONFIG_PACKAGE_rpcd-mod-luci=y" >> .config
+          echo "CONFIG_PACKAGE_rpcd-mod-rrdns=y" >> .config      
+          echo "CONFIG_PACKAGE_uhttpd=y" >> .config    
+          echo "CONFIG_PACKAGE_uhttpd-mod-ubus=y" >> .config   
+          echo "CONFIG_PACKAGE_wpad-basic-wolfssl=m" >> .config   
+          echo "CONFIG_PACKAGE_wpad-wolfssl=m" >> .config   
+          #
+          ########## Config WireGuard ##########
+          #
+          echo "CONFIG_PACKAGE_kmod-crypto-kpp=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-crypto-lib-chacha20=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-crypto-lib-poly1305=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-crypto-lib-blake2s=y" >> .config      
+          echo "CONFIG_PACKAGE_kmod-crypto-lib-chacha20poly1305=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-crypto-lib-curve25519=y" >> .config          
+          echo "CONFIG_PACKAGE_kmod-udptunnel4=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-udptunnel6=y" >> .config
+          echo "CONFIG_PACKAGE_libcares=y" >> .config
+          echo "CONFIG_PACKAGE_librt=y" >> .config          
+
           echo "CONFIG_PACKAGE_luci-app-wireguard=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-ddns=y" >> .config
-          echo "CONFIG_PACKAGE_openvpn-openssl=y" >> .config
-          echo "CONFIG_PACKAGE_wireguard=y" >> .config
-          echo "CONFIG_PACKAGE_qrencode=y" >> .config
-          echo "CONFIG_PACKAGE_wpad-basic-wolfssl=m\n" >> .config
-          echo "CONFIG_PACKAGE_wpad-wolfssl=y\n" >> .config
+          echo "CONFIG_PACKAGE_kmod-wireguard=y" >> .config     
+          echo "CONFIG_PACKAGE_wireguard-tools=y" >> .config    
+          echo "CONFIG_PACKAGE_luci-proto-wireguard=y" >> .config    
+          #
+          ########## Config Adblock ##########
+          #
+          echo "CONFIG_PACKAGE_adblock=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-adblock=y" >> .config            
+          #
+          ########## Config Utilis ##########
+          #
+          echo "CONFIG_PACKAGE_bash=y" >> .config
+          echo "CONFIG_PACKAGE_zlib=m" >> .config
+          echo "CONFIG_PACKAGE_htop=y" >> .config   
+          echo "CONFIG_PACKAGE_nano=y" >> .config
+          #
+          ########## Config Statistics ##########
+          #
+          echo "CONFIG_PACKAGE_collectd=y" >> .config
+          echo "CONFIG_PACKAGE_collectd-mod-cpu=y" >> .config
+          echo "CONFIG_PACKAGE_collectd-mod-interface=y" >> .config
+          echo "CONFIG_PACKAGE_collectd-mod-iwinfo=y" >> .config
+          echo "CONFIG_PACKAGE_collectd-mod-load=y" >> .config
+          echo "CONFIG_PACKAGE_collectd-mod-memory=y" >> .config
+          echo "CONFIG_PACKAGE_collectd-mod-network=y" >> .config
+          echo "CONFIG_PACKAGE_librrd1=y" >> .config
+          echo "CONFIG_PACKAGE_collectd-mod-rrdtool=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-statistics=y" >> .config
+          echo "CONFIG_PACKAGE_rrdtool1=y" >> .config         
+          #
+          ########## Config Acme ##########
+          echo "CONFIG_PACKAGE_acme=y" >> .config
+          echo "CONFIG_PACKAGE_wget-ssl=y" >> .config
+          echo "CONFIG_PACKAGE_ca-bundle=y" >> .config
+          echo "CONFIG_PACKAGE_openssl-util=y" >> .config
+          echo "CONFIG_PACKAGE_socat=y" >> .config
+          #
+          ########## Config Others ##########
+          #
+          echo "CONFIG_PACKAGE_libuci-lua=y" >> .config
+          echo "CONFIG_PACKAGE_libreadline=y" >> .config          
+          ########## Config MQTT ##########
+          #echo "CONFIG_PACKAGE_mosquitto-client-ssl=y" >> .config
+          #echo "CONFIG_PACKAGE_cJSON=y" >> .config
+          #echo "CONFIG_PACKAGE_libmosquitto-ssl=y" >> .config
+          ##########
+          #echo "CONFIG_PACKAGE_libltdl=y" >> .config
+          #echo "CONFIG_PACKAGE_libncurses=y" >> .config
+          #echo "CONFIG_PACKAGE_libopenssl=y" >> .config
+          #echo "CONFIG_PACKAGE_libqrencode=y" >> .config
+          #echo "CONFIG_PACKAGE_qrencode=y" >> .config
+          #echo "CONFIG_PACKAGE_nss-firmware-ipq8074=y" >> .config
+          #echo "CONFIG_PACKAGE_terminfo=y" >> .config
+          #echo "CONFIG_PACKAGE_wpad-openssl=m" >> .config
           make defconfig
-      - name: Enable WiFi on default config
+      - name: Add configuration
+        run: |
+          mkdir -p files/sbin
+          wget https://raw.githubusercontent.com/mstarczewski/OpenWRT_packages/master/sysinfo/files/sbin/sysinfo.sh -P files/sbin
+          chmod +x files/sbin/sysinfo.sh
+          wget https://raw.githubusercontent.com/mstarczewski/OpenWRT_packages/master/sysinfo/files/etc/profile.d/99-sysinfo.sh -P files/etc/profile.d
+      - name: Enable WiFi on default config, disable acme, enable dnscrypt-proxy
         run: |
           mkdir -p files/etc/uci-defaults
           cat > files/etc/uci-defaults/xxx_config << EOF
           uci set wireless.radio1.disabled=0
           uci commit
+          /etc/init.d/acme disable
+          /etc/init.d/dnscrypt-proxy enable
+          /etc/init.d/dnscrypt-proxy restart
           EOF
       - name: Download package sources
         run: make download V=s
@@ -122,4 +231,3 @@ jobs:
           title: 'Updated prebuilt images (${{ env.BUILDINFO }})'
           automatic_release_tag: ipq807x-5.15-latest
           files: bin/targets/ipq807x/generic/*
-     
