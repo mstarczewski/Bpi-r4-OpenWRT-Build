@@ -99,7 +99,7 @@ jobs:
           echo "CONFIG_PACKAGE_uhttpd=y" >> .config    
           echo "CONFIG_PACKAGE_uhttpd-mod-ubus=y" >> .config   
           echo "CONFIG_PACKAGE_wpad-basic-wolfssl=m" >> .config   
-          echo "CONFIG_PACKAGE_wpad-wolfssl=m" >> .config   
+          echo "CONFIG_PACKAGE_wpad-wolfssl=y" >> .config   
           #
           ########## Config WireGuard ##########
           #
