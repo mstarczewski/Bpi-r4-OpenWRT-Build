@@ -64,6 +64,7 @@ jobs:
           echo "CONFIG_PACKAGE_cgi-io=y" >> .config
           echo "CONFIG_PACKAGE_liblucihttp=y" >> .config
           echo "CONFIG_PACKAGE_luci=y" >> .config
+          echo "CONFIG_PACKAGE_libubus-lua=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-firewall=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-opkg=y" >> .config
           echo "CONFIG_PACKAGE_luci-base=y" >> .config
@@ -90,32 +91,21 @@ jobs:
           echo "CONFIG_DEVEL=y" >> .config
           echo "CONFIG_JSON_CYCLONEDX_SBOM=y" >> .config
           echo "CONFIG_MAKE_TOOLCHAIN=y" >> .config
+          echo "CONFIG_PACKAGE_rpcd=y" >> .config
+          echo "CONFIG_PACKAGE_rpcd-mod-file=y" >> .config
+          echo "CONFIG_PACKAGE_rpcd-mod-iwinfo=y" >> .config
+          echo "CONFIG_PACKAGE_rpcd-mod-luci=y" >> .config
+          echo "CONFIG_PACKAGE_rpcd-mod-rrdns=y" >> .config      
+          echo "CONFIG_PACKAGE_uhttpd=y" >> .config    
+          echo "CONFIG_PACKAGE_uhttpd-mod-ubus=y" >> .config   
+          echo "CONFIG_PACKAGE_libwolfssl-cpu-crypto=y" >> .config        
+
           
-          #echo "CONFIG_PACKAGE_cgi-io=y" >> .config
-          #echo "CONFIG_PACKAGE_kmod-qca-nss-dp=y" >> .config
-          #echo "CONFIG_PACKAGE_kmod-qca-ssdk-nohnat=y" >> .config
-          #echo "CONFIG_PACKAGE_libiwinfo-lua=y" >> .config
-          #echo "CONFIG_PACKAGE_liblua=y" >> .config
-          #echo "CONFIG_PACKAGE_liblucihttp=y" >> .config
-          #echo "CONFIG_PACKAGE_liblucihttp-lua=y" >> .config          
-          #echo "CONFIG_PACKAGE_libubus-lua=y" >> .config
+          #echo "CONFIG_PACKAGE_libwolfssl=n\n" >> .config
           #echo "CONFIG_PACKAGE_lua=y" >> .config
-          #echo "CONFIG_PACKAGE_luci=y" >> .config        
-          #echo "CONFIG_PACKAGE_luci-app-firewall=y" >> .config
-          #echo "CONFIG_PACKAGE_luci-app-opkg=y" >> .config          
-          #echo "CONFIG_PACKAGE_luci-base=y" >> .config
-          #echo "CONFIG_PACKAGE_luci-lib-base=y" >> .config   
-          #echo "CONFIG_PACKAGE_luci-lib-ip=y" >> .config         
-          #echo "CONFIG_PACKAGE_luci-lib-jsonc=y" >> .config       
-          #echo "CONFIG_PACKAGE_luci-lib-nixio=y" >> .config  
-          #echo "CONFIG_PACKAGE_luci-mod-admin-full=y" >> .config          
-          #echo "CONFIG_PACKAGE_luci-mod-network=y" >> .config
-          #echo "CONFIG_PACKAGE_luci-mod-status=y" >> .config
-          #echo "CONFIG_PACKAGE_luci-mod-system=y" >> .config
-          #echo "CONFIG_PACKAGE_luci-proto-ipv6=y" >> .config
-          #echo "CONFIG_PACKAGE_luci-proto-ppp=y" >> .config          
-          #echo "CONFIG_PACKAGE_luci-theme-bootstrap=y" >> .config          
-          #echo "CONFIG_PACKAGE_qca-ssdk-shell=y" >> .config          
+          #echo "CONFIG_PACKAGE_libiwinfo-lua=y" >> .config
+          #echo "CONFIG_PACKAGE_liblua=y" >> .config          
+          #echo "CONFIG_PACKAGE_liblucihttp-lua=y" >> .config 
           #echo "CONFIG_PACKAGE_rpcd=y" >> .config
           #echo "CONFIG_PACKAGE_rpcd-mod-file=y" >> .config
           #echo "CONFIG_PACKAGE_rpcd-mod-iwinfo=y" >> .config
@@ -125,8 +115,6 @@ jobs:
           #echo "CONFIG_PACKAGE_uhttpd-mod-ubus=y" >> .config   
           #echo "CONFIG_PACKAGE_wpad-basic-wolfssl=m" >> .config   
           #echo "CONFIG_PACKAGE_wpad-wolfssl=y" >> .config   
-          #echo "CONFIG_PACKAGE_libwolfssl=n\n" >> .config
-          #echo "CONFIG_PACKAGE_libwolfssl-cpu-crypto=y" >> .config        
           #
           ########## Config WireGuard ##########
           #
@@ -154,9 +142,10 @@ jobs:
           ########## Config Utilis ##########
           #
           echo "CONFIG_PACKAGE_bash=y" >> .config
-          echo "CONFIG_PACKAGE_zlib=m" >> .config
+          echo "CONFIG_PACKAGE_zlib=y" >> .config
           echo "CONFIG_PACKAGE_htop=y" >> .config   
           echo "CONFIG_PACKAGE_nano=y" >> .config
+          echo "CONFIG_PACKAGE_curl=y" >> .config
           #
           ########## Config Statistics ##########
           #
@@ -167,6 +156,7 @@ jobs:
           echo "CONFIG_PACKAGE_collectd-mod-load=y" >> .config
           echo "CONFIG_PACKAGE_collectd-mod-memory=y" >> .config
           echo "CONFIG_PACKAGE_collectd-mod-network=y" >> .config
+          echo "CONFIG_PACKAGE_collectd-mod-thermal=y" >> .config
           echo "CONFIG_PACKAGE_librrd1=y" >> .config
           echo "CONFIG_PACKAGE_collectd-mod-rrdtool=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-statistics=y" >> .config
