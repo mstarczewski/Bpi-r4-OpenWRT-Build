@@ -13,10 +13,7 @@ jobs:
     outputs:
       latest_commit_sha: ${{ steps.get_sha.outputs.latest_commit_sha }}
     steps:
-      - name: Clone OpenWRT repository
-        run: |
-
-          
+       
       - name: Get the latest commit SHA
         id: get_sha
         run: |
@@ -36,7 +33,7 @@ jobs:
           python3-distutils python3-setuptools rsync swig unzip zlib1g-dev file wget
           sudo apt full-upgrade -y
 
-      - name: Clone OpenWRT feeds repository (WiFi 7 support)
+      - name: Clone OpenWrt repository and mtk-openwrt-feeds
         run: |
           git clone --branch master https://github.com/openwrt/openwrt.git openwrt
           git clone --branch master https://git01.mediatek.com/openwrt/feeds/mtk-openwrt-feeds
@@ -45,10 +42,6 @@ jobs:
         run: |
           ./scripts/feeds update -a
           ./scripts/feeds install -a
-
-      - name: Build OpenWRT with WiFi 7 (First build)
-        run: |
-          bash ../mtk-openwrt-feeds/autobuild/unified/autobuild.sh filogic-mac80211-BE19000 log_file=make
 
       - name: Configure firmware image
         run: |
@@ -149,6 +142,9 @@ jobs:
           echo "CONFIG_PACKAGE_libreadline=y" >> .config          
           #         
           make defconfig
+      - name: Build mtk-openwrt-feeds
+        run: |
+          bash ../mtk-openwrt-feeds/autobuild/unified/autobuild.sh filogic-mac80211-BE19000 log_file=make          
       - name: Add configuration
         run: |
           mkdir -p files/sbin
