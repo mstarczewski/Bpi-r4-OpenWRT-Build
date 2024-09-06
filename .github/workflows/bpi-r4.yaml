@@ -39,11 +39,11 @@ jobs:
       - name: Clone OpenWRT feeds repository (WiFi 7 support)
         run: |
           git clone --branch master https://github.com/openwrt/openwrt.git openwrt
+          cd openwrt
           git clone --branch master https://git01.mediatek.com/openwrt/feeds/mtk-openwrt-feeds
 
       - name: Build OpenWRT with WiFi 7 (First build)
         run: |
-          cd openwrt
           bash ./mtk-openwrt-feeds/autobuild/unified/autobuild.sh filogic-mac80211-BE19000 log_file=make
 
       - name: Update and install feeds
