@@ -40,7 +40,7 @@ jobs:
         run: |
           git clone --branch master https://github.com/openwrt/openwrt.git openwrt
           git clone --branch master https://git01.mediatek.com/openwrt/feeds/mtk-openwrt-feeds
-
+          cd openwrt
       - name: Update and install feeds
         run: |
           ./scripts/feeds update -a
@@ -48,7 +48,6 @@ jobs:
 
       - name: Build OpenWRT with WiFi 7 (First build)
         run: |
-          cd openwrt
           bash ../mtk-openwrt-feeds/autobuild/unified/autobuild.sh filogic-mac80211-BE19000 log_file=make
 
       - name: Configure firmware image
