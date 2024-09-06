@@ -4,11 +4,9 @@ on:
   workflow_dispatch:
 
 env:
-  REMOTE_REPOSITORY: danpawlik/openwrt
-  REMOTE_BRANCH: be14
-  RELEASE_PREFIX: Mediatek_mt7988a_bpi-r4_be14
-  DEVICE_CONFIG: configs/mediatek/mt7988a/bpi-r4
-  ROLE_CONFIG: configs/common/main-router
+  REMOTE_REPOSITORY: mstarczewski/openwrt
+  REMOTE_BRANCH: master
+  RELEASE_PREFIX: Mediatek_mt7988a_Kernel_6_6
 
 jobs:
   check_commits:
