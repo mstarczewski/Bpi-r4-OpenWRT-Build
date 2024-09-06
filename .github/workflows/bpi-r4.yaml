@@ -38,11 +38,6 @@ jobs:
           python3-setuptools rsync swig unzip zlib1g-dev file wget
           sudo apt full-upgrade -y
 
-      - name: Clone OpenWRT repository
-        run: |
-          git clone --branch master https://github.com/openwrt/openwrt.git openwrt
-          cd openwrt
-          
       - name: Clone OpenWRT feeds repository (WiFi 7 support)
         run: |
           cd openwrt
