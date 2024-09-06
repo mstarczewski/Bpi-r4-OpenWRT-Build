@@ -5,7 +5,7 @@ on:
 
 env:
   REMOTE_REPOSITORY: mstarczewski/openwrt
-  REMOTE_BRANCH: master
+  REMOTE_BRANCH: main
   RELEASE_PREFIX: Mediatek_mt7988a_Kernel_6_6
 
 jobs:
