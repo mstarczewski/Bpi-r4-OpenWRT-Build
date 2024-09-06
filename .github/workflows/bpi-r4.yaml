@@ -16,6 +16,7 @@ jobs:
       - name: Clone OpenWRT repository
         run: |
           git clone --branch master https://github.com/openwrt/openwrt.git openwrt
+          cd openwrt
           
       - name: Get the latest commit SHA
         id: get_sha
@@ -42,7 +43,6 @@ jobs:
 
       - name: Build OpenWRT with WiFi 7 (First build)
         run: |
-          cd openwrt
           bash ./mtk-openwrt-feeds/autobuild/unified/autobuild.sh filogic-mac80211-BE19000 log_file=make
 
       - name: Update and install feeds
