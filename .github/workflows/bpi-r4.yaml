@@ -45,10 +45,11 @@ jobs:
         with:
           repository: ${{ env.REMOTE_REPOSITORY }}
           ref: ${{ env.REMOTE_BRANCH }}
-
+          
       - name: Clone mtk-Openwrt-feeds feeds
         run: |
           pwd
+          ls -al
           cd openwrt
           pwd
           git clone --branch master https://git01.mediatek.com/openwrt/feeds/mtk-openwrt-feeds
