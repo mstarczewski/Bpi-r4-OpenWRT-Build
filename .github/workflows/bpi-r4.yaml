@@ -50,12 +50,14 @@ jobs:
         run: |
           pwd
           ls -al
-          cd openwrt
           pwd
           git clone --branch master https://git01.mediatek.com/openwrt/feeds/mtk-openwrt-feeds
+          pwd
+          ls -al
           ./scripts/feeds update -a
           ./scripts/feeds install -a
           pwd
+          ls -al
       #- name: Update and install feeds
       #  run: |
       #    ./scripts/feeds update -a
