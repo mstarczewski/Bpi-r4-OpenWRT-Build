@@ -51,7 +51,6 @@ jobs:
         run: |
           pwd
           ls -al
-          autoupdate
           pwd
           git clone --branch master https://git01.mediatek.com/openwrt/feeds/mtk-openwrt-feeds
           pwd
