@@ -21,13 +21,14 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - name: Checkout
-        ls
       uses: actions/checkout@main
 
     - name: Initialization environment
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
+        cat /configs/bpi-r4_config
+        cat ../configs/bpi-r4_config
         #sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
         #sudo docker image prune --all --force
         sudo apt update
