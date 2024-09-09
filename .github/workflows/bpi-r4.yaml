@@ -8,9 +8,9 @@ env:
   REPO_URL: https://github.com/danpawlik/openwrt
   REPO_BRANCH: be14-and-hostapd
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: ../configs/bpi-r4_config
-  FEEDS_SH: ../includes/feeds.sh
-  MODS_SH: ../includes/modifications.sh
+  CONFIG_FILE: /configs/bpi-r4_config
+  FEEDS_SH: /includes/feeds.sh
+  MODS_SH: /includes/modifications.sh
   UPLOAD_BIN_DIR: true
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
@@ -19,7 +19,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-24.04
-
+      ls -l
     steps:
     - name: Checkout
       uses: actions/checkout@main
