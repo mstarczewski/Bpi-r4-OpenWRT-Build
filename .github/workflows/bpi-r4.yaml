@@ -28,8 +28,8 @@ jobs:
         DEBIAN_FRONTEND: noninteractive
       run: |
         ls
-        cat /configs/bpi-r4_config
-        cat ../configs/bpi-r4_config
+        cat configs/bpi-r4_config
+        cat includes/feeds.sh
         #sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
         #sudo docker image prune --all --force
         sudo apt update
