@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - name: Checkout
-      ls
+        ls
       uses: actions/checkout@main
 
     - name: Initialization environment
