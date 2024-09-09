@@ -27,6 +27,7 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
+        ls
         cat /configs/bpi-r4_config
         cat ../configs/bpi-r4_config
         #sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
