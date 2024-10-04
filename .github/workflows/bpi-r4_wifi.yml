@@ -9,7 +9,6 @@ env:
   REMOTE_BRANCH: main
   RELEASE_PREFIX: bpi-r4
   DEVICE_CONFIG: configs/bpi-r4_config
-
 jobs:
   check_commits:
     name: Check Commits
@@ -33,6 +32,8 @@ jobs:
     needs: [check_commits]
     runs-on: ubuntu-24.04
     steps:
+      - name: Get current date
+        run: echo "IMAGE_DATE=$(date +%F)" >> $GITHUB_ENV
       - name: Install dependencies
         run: |
           sudo apt update
@@ -81,14 +82,20 @@ jobs:
       - name: Build the firmware image
         run: make -j $(nproc) world
 
+      - name: Remove packages directory
+        run: rm -rf bin/packages
+
+      #- name: Strip binaries and libraries
+      #  run: find bin/targets/mediatek/filogic -type f -exec strip --strip-unneeded {} +
+
       - name: Package output
-        run: tar -cvf bpi_r4-images.tar bin/targets/mediatek/filogic
+        run: tar -cvf bpi_r4-images-${{ env.IMAGE_DATE }}.tar bin/targets/mediatek/filogic
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: bpi_r4-images
-          path: bpi_r4-images.tar
+          name: bpi_r4-images-${{ env.IMAGE_DATE }}
+          path: bpi_r4-images-${{ env.IMAGE_DATE }}.tar
 
   release:
     name: Create release
@@ -112,14 +119,14 @@ jobs:
         with:
           files: bin/targets/mediatek/filogic/*
           tag_name: ${{ env.RELEASE_PREFIX }}-${{ env.REMOTE_BRANCH }}-${{ env.RELEASE_DATE }}
-          name: OpenWRT BPI-R4 with BE14 + luci - ${{ env.REMOTE_BRANCH }} - ${{ env.RELEASE_DATE }}
+          name: OpenWRT BPI-R4 - ${{ env.REMOTE_BRANCH }} - ${{ env.RELEASE_DATE }}
           body: |
             Updated prebuilt images for ${{ env.RELEASE_DATE }}
             Build Commit: ${{ needs.check_commits.outputs.latest_commit_sha }}
       - name: Clean up old releases
         uses: dev-drprasad/delete-older-releases@master
         with:
-          keep_latest: 5
+          keep_latest: 2
           delete_tags: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
