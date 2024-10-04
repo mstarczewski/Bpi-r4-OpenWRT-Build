@@ -1,32 +1,55 @@
-#
-############## Mediatek ################
+CONFIG_PACKAGE_wpad-openssl=y
+#CONFIG_PACKAGE_libustream-mbedtls=m
+CONFIG_PACKAGE_libustream-openssl=y
+CONFIG_LUA_ECO_OPENSSL=y
+CONFIG_LIBCURL_OPENSSL=y
+CONFIG_OPENSSL_OPTIMIZE_SPEED=y
+
+# enable /dev/crypto
+CONFIG_PACKAGE_libopenssl-devcrypto=y
+CONFIG_PACKAGE_kmod-cryptodev=y
+
+
+############## Target Platform ################
+# Konfiguracja platformy docelowej dla Banana Pi R4 opartej na Mediatek Filogic.
 CONFIG_TARGET_mediatek=y
 CONFIG_TARGET_mediatek_filogic=y
 CONFIG_TARGET_mediatek_filogic_DEVICE_bananapi_bpi-r4=y
+
+############## Wi-Fi MT7921 & MT7925 Support ################
+# Sterowniki i firmware do obsługi kart sieciowych Wi-Fi MT7921 i MT7925.
 # MT7921
-CONFIG_PACKAGE_kmod-mt7921-common=y
-CONFIG_PACKAGE_kmod-mt7921-firmware=y
-CONFIG_PACKAGE_kmod-mt7921e=y
+#CONFIG_PACKAGE_kmod-mt7921-common=y
+#CONFIG_PACKAGE_kmod-mt7921-firmware=y
+#CONFIG_PACKAGE_kmod-mt7921e=y
 # MT7925
-CONFIG_PACKAGE_kmod-mt7925-common=y
-CONFIG_PACKAGE_kmod-mt7925e=y
-CONFIG_PACKAGE_kmod-mt7925-firmware=y
-CONFIG_PACKAGE_kmod-mt792x-common=y
-CONFIG_PACKAGE_kmod-mt792x-usb=y
-## debuging
+#CONFIG_PACKAGE_kmod-mt7925-common=y
+#CONFIG_PACKAGE_kmod-mt7925e=y
+#CONFIG_PACKAGE_kmod-mt7925-firmware=y
+#CONFIG_PACKAGE_kmod-mt792x-common=y
+#CONFIG_PACKAGE_kmod-mt792x-usb=y
+# MT7996
+CONFIG_DEFAULT_kmod-mt7996-233-firmware=y
+CONFIG_DEFAULT_kmod-mt7996-firmware=y
+
+############## Debugging and Development Tools ################
+# Pakiety do debugowania i obsługi systemów plików oraz sieci w trybie developerskim.
 CONFIG_PACKAGE_block-mount=y
 CONFIG_PACKAGE_blockd=m
 CONFIG_PACKAGE_mtdev=m
 CONFIG_PACKAGE_kmod-mtd-rw=y
 CONFIG_PACKAGE_kmod-veth=y
-#
-#### Build #########
+
+############## Build and Toolchain ################
+# Konfiguracja środowiska do budowy narzędzi i programów w oparciu o LLVM.
 CONFIG_BPF_TOOLCHAIN_BUILD_LLVM=y
 CONFIG_SDK_LLVM_BPF=y
 CONFIG_USE_LLVM_BUILD=y
-#
-##########Configminimal##########
-#
+#CONFIG_USE_LTO=y
+#CONFIG_USE_MOLD=y
+
+############## Minimal System Configuration ################
+# Minimalna konfiguracja systemu z interfejsem LuCI i narzędziami podstawowymi.
 CONFIG_PACKAGE_cgi-io=y
 CONFIG_PACKAGE_liblucihttp=y
 CONFIG_PACKAGE_luci=y
@@ -45,6 +68,11 @@ CONFIG_PACKAGE_luci-mod-system=y
 CONFIG_PACKAGE_luci-proto-ipv6=y
 CONFIG_PACKAGE_luci-proto-ppp=y
 CONFIG_PACKAGE_luci-theme-bootstrap=y
+CONFIG_PACKAGE_liblucihttp-ucode=y
+CONFIG_PACKAGE_luci-ssl-openssl=y
+
+############## Kernel and Build Options ################
+# Konfiguracja jądra systemowego i narzędzi budowy.
 CONFIG_ALL_KMODS=y
 CONFIG_ALL_NONSHARED=y
 CONFIG_COLLECT_KERNEL_DEBUG=y
@@ -54,17 +82,31 @@ CONFIG_SDK=y
 CONFIG_DEVEL=y
 CONFIG_JSON_CYCLONEDX_SBOM=y
 CONFIG_MAKE_TOOLCHAIN=y
+
+#CONFIG_AUTOREMOVE=y
+#CONFIG_PACKAGE_libbpf=m
+#CONFIG_PACKAGE_libelf=m
+#CONFIG_PACKAGE_libpcap=m
+#CONFIG_PACKAGE_libxdp=m
+#CONFIG_PACKAGE_tc-tiny=m
+#CONFIG_PACKAGE_xdp-filter=m
+#CONFIG_PACKAGE_xdp-loader=m
+#CONFIG_PACKAGE_xdpdump=m
+
+############## RPC Daemon and Web Server ################
+# Obsługa RPC i web servera do zarządzania OpenWRT.
 CONFIG_PACKAGE_rpcd=y
 CONFIG_PACKAGE_rpcd-mod-file=y
 CONFIG_PACKAGE_rpcd-mod-iwinfo=y
 CONFIG_PACKAGE_rpcd-mod-luci=y
 CONFIG_PACKAGE_rpcd-mod-rrdns=y
+CONFIG_PACKAGE_rpcd-mod-ucode=y
 CONFIG_PACKAGE_uhttpd=y
 CONFIG_PACKAGE_uhttpd-mod-ubus=y
 CONFIG_PACKAGE_libwolfssl-cpu-crypto=y
 
-##########ConfigWireGuard##########
-#
+############## WireGuard VPN Configuration ################
+# Pakiety niezbędne do działania WireGuard VPN.
 CONFIG_PACKAGE_kmod-crypto-kpp=y
 CONFIG_PACKAGE_kmod-crypto-lib-chacha20=y
 CONFIG_PACKAGE_kmod-crypto-lib-poly1305=y
@@ -80,22 +122,22 @@ CONFIG_PACKAGE_kmod-wireguard=y
 CONFIG_PACKAGE_wireguard-tools=y
 CONFIG_PACKAGE_luci-proto-wireguard=y
 CONFIG_PACKAGE_qrencode=y
-#
-##########ConfigAdblock##########
-#
+
+############## Adblock Configuration ################
+# Pakiety do obsługi Adblocka.
 CONFIG_PACKAGE_adblock=y
 CONFIG_PACKAGE_luci-app-adblock=y
-#
-##########ConfigUtilis##########
-#
+
+############## Utility Packages ################
+# Narzędzia przydatne w codziennym zarządzaniu systemem.
 CONFIG_PACKAGE_bash=y
 CONFIG_PACKAGE_zlib=y
 CONFIG_PACKAGE_htop=y
 CONFIG_PACKAGE_nano=y
-CONFIG_PACKAGE_curl=y
-#
-##########ConfigStatistics##########
-#
+#CONFIG_PACKAGE_curl=y
+
+############## System Statistics Configuration ################
+# Konfiguracja do zbierania i wizualizacji statystyk systemowych.
 CONFIG_PACKAGE_collectd=y
 CONFIG_PACKAGE_collectd-mod-cpu=y
 CONFIG_PACKAGE_collectd-mod-interface=y
@@ -103,7 +145,7 @@ CONFIG_PACKAGE_collectd-mod-iwinfo=y
 CONFIG_PACKAGE_collectd-mod-load=y
 CONFIG_PACKAGE_collectd-mod-memory=y
 CONFIG_PACKAGE_collectd-mod-network=y
-CONFIG_PACKAGE_collectd-mod-thermal=y
+#CONFIG_PACKAGE_collectd-mod-thermal=y
 CONFIG_PACKAGE_collectd-mod-sensors=y
 CONFIG_PACKAGE_collectd-mod-wireless=y
 CONFIG_PACKAGE_collectd-mod-rrdtool=y
@@ -112,18 +154,45 @@ CONFIG_PACKAGE_luci-app-statistics=y
 CONFIG_PACKAGE_librrd1=y
 CONFIG_PACKAGE_rrdtool1=y
 
-#
-##########ConfigAcme##########
+############## ACME (Let's Encrypt) ################
+# Pakiety do automatycznego zarządzania certyfikatami SSL z Let's Encrypt.
 CONFIG_PACKAGE_acme=y
 CONFIG_PACKAGE_wget-ssl=y
 CONFIG_PACKAGE_ca-bundle=y
 CONFIG_PACKAGE_openssl-util=y
 CONFIG_PACKAGE_socat=y
-#
-##########Qosify##########
+
+############## QoS Configuration ################
+# Pakiety do obsługi QoS (Quality of Service).
 CONFIG_PACKAGE_qosify=y
-#
-##########ConfigOthers##########
-#
+
+############## Log Monitoring and Management ################
+# Pakiety do monitorowania i zarządzania logami systemowymi.
+#CONFIG_PACKAGE_logd=y
+#CONFIG_PACKAGE_luci-app-log=y
+
+############## System Update (Attended Sysupgrade) ################
+# Pakiet do aktualizacji systemu poprzez Attended Sysupgrade.
+#CONFIG_PACKAGE_luci-app-attendedsysupgrade=y
+
+############## Other Utilities ################
+# Dodatkowe narzędzia i biblioteki systemowe.
 CONFIG_PACKAGE_libuci-lua=y
 CONFIG_PACKAGE_libreadline=y
+
+############## USB Support ################
+# Pakiety potrzebne do obsługi urządzeń USB (w tym dysków).
+#CONFIG_PACKAGE_kmod-usb-core=y
+#CONFIG_PACKAGE_kmod-usb2=y
+#CONFIG_PACKAGE_kmod-usb3=y
+#CONFIG_PACKAGE_kmod-usb-storage=y
+#CONFIG_PACKAGE_kmod-usb-storage-uas=y
+#CONFIG_PACKAGE_usbutils=y
+
+############## Filesystem Support ################
+# Pakiety potrzebne do obsługi systemów plików NTFS, FAT32 i EXT4.
+#CONFIG_PACKAGE_kmod-fs-ext4=y
+#CONFIG_PACKAGE_kmod-fs-vfat=y
+#CONFIG_PACKAGE_ntfs-3g=y
+#CONFIG_PACKAGE_kmod-nls-cp437=y
+#CONFIG_PACKAGE_kmod-nls-iso8859-1=y
