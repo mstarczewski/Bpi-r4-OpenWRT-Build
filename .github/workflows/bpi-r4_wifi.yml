@@ -106,7 +106,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: bpi_r4-images
+          name: bpi_r4-images-${{ env.IMAGE_DATE }}
 
       - name: Extract artifacts
         run: tar xf bpi_r4-images-${{ env.IMAGE_DATE }}.tar
