@@ -28,7 +28,7 @@ jobs:
           echo "latest_commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
           echo "latest_commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
   build:
-    name: Build BPI-R4 with BE14 + luci
+    name: Build BPI-R4
     needs: [check_commits]
     runs-on: ubuntu-24.04
     steps:
@@ -109,7 +109,7 @@ jobs:
           name: bpi_r4-images
 
       - name: Extract artifacts
-        run: tar xf bpi_r4-images.tar
+        run: tar xf bpi_r4-images-${{ env.IMAGE_DATE }}.tar
 
       - name: Get current date
         run: echo "RELEASE_DATE=$(date +%F)" >> $GITHUB_ENV
