@@ -89,13 +89,13 @@ jobs:
       #  run: find bin/targets/mediatek/filogic -type f -exec strip --strip-unneeded {} +
 
       - name: Package output
-        run: tar -cvf bpi_r4-images-${{ env.IMAGE_DATE }}.tar bin/targets/mediatek/filogic
+        run: tar -cvf bpi_r4-images.tar bin/targets/mediatek/filogic
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: bpi_r4-images-${{ env.IMAGE_DATE }}
-          path: bpi_r4-images-${{ env.IMAGE_DATE }}.tar
+          name: bpi_r4-images
+          path: bpi_r4-images.tar
 
   release:
     name: Create release
@@ -106,10 +106,10 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: bpi_r4-images-${{ env.IMAGE_DATE }}
+          name: bpi_r4-images
 
       - name: Extract artifacts
-        run: tar xf bpi_r4-images-${{ env.IMAGE_DATE }}.tar
+        run: tar xf bpi_r4-images.tar
 
       - name: Get current date
         run: echo "RELEASE_DATE=$(date +%F)" >> $GITHUB_ENV
