@@ -9,6 +9,7 @@ mkdir -p files/etc/uci-defaults
 cat > files/etc/uci-defaults/xxx_config << EOF
 uci set wireless.radio0.disabled=0
 uci commit
+/etc/init.d/acme enable
 /etc/init.d/acme disable
 /etc/init.d/dnscrypt-proxy enable
 /etc/init.d/dnscrypt-proxy restart
