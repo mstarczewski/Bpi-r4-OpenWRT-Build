@@ -129,7 +129,7 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@master
         with:
-          files: bin/targets/mediatek/filogic/*_${{ env.IMAGE_TIMESTAMP }}-squashfs-sysupgrade.itb
+          files: bin/targets/mediatek/filogic/*
           tag_name: ${{ env.RELEASE_PREFIX }}-${{ env.REMOTE_BRANCH }}-${{ env.RELEASE_DATE }}
           name: OpenWRT BPI-R4 - ${{ env.REMOTE_BRANCH }} - ${{ env.RELEASE_DATE }}
           body: |
