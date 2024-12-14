@@ -1,5 +1,5 @@
 ---
-name: Build OpenWRT for Banana Pi R4
+name: Build OpenWRT for Banana Pi R4 v2
 
 on:
   workflow_dispatch:
@@ -9,6 +9,7 @@ env:
   REMOTE_BRANCH: main
   RELEASE_PREFIX: bpi-r4
   DEVICE_CONFIG: configs/bpi-r4_config
+
 jobs:
   check_commits:
     name: Check Commits
@@ -24,16 +25,17 @@ jobs:
 
       - name: Get the latest commit SHA
         id: get_sha
-        run: |
-          echo "latest_commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
-          echo "latest_commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+        run: echo "latest_commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
   build:
     name: Build BPI-R4
     needs: [check_commits]
     runs-on: ubuntu-24.04
+
     steps:
-      - name: Get current date
-        run: echo "IMAGE_DATE=$(date +%F)" >> $GITHUB_ENV
+      - name: Set up environment
+        run: echo "IMAGE_TIMESTAMP=$(date +'%Y_%m_%d_%H_%M_%S')" >> $GITHUB_ENV
+
       - name: Install dependencies
         run: |
           sudo apt update
@@ -42,6 +44,7 @@ jobs:
             gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev \
             python3-setuptools rsync swig unzip zlib1g-dev file wget curl
           sudo apt full-upgrade -y
+
       - name: Checkout remote repository
         uses: actions/checkout@v4
         with:
@@ -52,41 +55,46 @@ jobs:
         run: |
           ./scripts/feeds update -a
           ./scripts/feeds install -a
+
       - name: Configure firmware image
         run: |
           curl -SL https://raw.githubusercontent.com/${{ github.repository_owner }}/Bpi-r4-OpenWRT-Build/master/${{ env.DEVICE_CONFIG }} > .config
           make defconfig
-      - name: Add configuration
+
+      - name: Add custom configuration
         run: |
-          mkdir -p files/sbin
+          mkdir -p files/sbin files/etc/profile.d files/etc/uci-defaults
           wget https://raw.githubusercontent.com/mstarczewski/OpenWRT_packages/master/sysinfo/files/sbin/sysinfo.sh -P files/sbin
           chmod +x files/sbin/sysinfo.sh
           wget https://raw.githubusercontent.com/mstarczewski/OpenWRT_packages/master/sysinfo/files/etc/profile.d/99-sysinfo.sh -P files/etc/profile.d
-      - name: Enable WiFi on default config, disable acme, enable dnscrypt-proxy
-        run: |
-          mkdir -p files/etc/uci-defaults
           cat > files/etc/uci-defaults/xxx_config << EOF
           uci set wireless.radio0.disabled=0
           uci commit
-          #/etc/init.d/acme disable
           /etc/init.d/dnscrypt-proxy enable
           /etc/init.d/dnscrypt-proxy restart
           /etc/init.d/adblock restart
           EOF
-      - name: Remove packages that are marked as modules just to save time
+
+      - name: Optimize build configuration
         run: |
-          grep "=m" .config | grep -v 'CONFIG_PACKAGE_libustream-mbedtls=m' | while read -r line; do module=$(echo "$line" | cut -f1 -d'='); sed -i "s/^$line$/# $module is not set/" .config; done
+          grep "=m" .config | grep -v 'CONFIG_PACKAGE_libustream-mbedtls=m' | \
+          while read -r line; do \
+            module=$(echo "$line" | cut -f1 -d'='); \
+            sed -i "s/^$line$/# $module is not set/" .config; \
+          done
+
       - name: Download dependencies
-        run: make -j $(nproc) download
+        run: make -j $(nproc) download || exit 1
 
       - name: Build the firmware image
-        run: make -j $(nproc) world
+        run: |
+          make -j $(nproc) world > build.log 2>&1 || (cat build.log && exit 1)
 
-      - name: Remove packages directory
-        run: rm -rf bin/packages
-
-      #- name: Strip binaries and libraries
-      #  run: find bin/targets/mediatek/filogic -type f -exec strip --strip-unneeded {} +
+      - name: Rename firmware image
+        run: |
+          ORIGINAL_IMAGE=$(find bin/targets/mediatek/filogic -name 'openwrt-mediatek-filogic-bananapi_bpi-r4-squashfs-sysupgrade.itb')
+          NEW_IMAGE="bin/targets/mediatek/filogic/openwrt-mediatek-filogic-bananapi_bpi-r4_${{ env.IMAGE_TIMESTAMP }}-squashfs-sysupgrade.itb"
+          mv "$ORIGINAL_IMAGE" "$NEW_IMAGE"
 
       - name: Package output
         run: tar -cvf bpi_r4-images.tar bin/targets/mediatek/filogic
@@ -115,7 +123,7 @@ jobs:
         run: echo "RELEASE_DATE=$(date +%F)" >> $GITHUB_ENV
 
       - name: Create release
-        uses: softprops/action-gh-release@master
+        uses: softprops/action-gh-release@v1
         with:
           files: bin/targets/mediatek/filogic/*
           tag_name: ${{ env.RELEASE_PREFIX }}-${{ env.REMOTE_BRANCH }}-${{ env.RELEASE_DATE }}
@@ -123,8 +131,9 @@ jobs:
           body: |
             Updated prebuilt images for ${{ env.RELEASE_DATE }}
             Build Commit: ${{ needs.check_commits.outputs.latest_commit_sha }}
+
       - name: Clean up old releases
-        uses: dev-drprasad/delete-older-releases@master
+        uses: dev-drprasad/delete-older-releases@v1
         with:
           keep_latest: 2
           delete_tags: true
