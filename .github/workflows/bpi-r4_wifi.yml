@@ -1,5 +1,5 @@
 ---
-name: Build OpenWRT for Banana Pi R4 v2
+name: Build OpenWRT for Banana Pi R4 v3
 
 on:
   workflow_dispatch:
