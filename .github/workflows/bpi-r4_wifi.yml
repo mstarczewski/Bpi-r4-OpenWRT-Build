@@ -131,9 +131,8 @@ jobs:
           body: |
             Updated prebuilt images for ${{ env.RELEASE_DATE }}
             Build Commit: ${{ needs.check_commits.outputs.latest_commit_sha }}
-
       - name: Clean up old releases
-        uses: luccas-freitas/delete-older-releases@v0.0.1
+        uses: dev-drprasad/delete-older-releases@master
         with:
           keep_latest: 2
           delete_tags: true
