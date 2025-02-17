@@ -1,0 +1,189 @@
+name: 🛠️ Build OpenWRT Bpi-R4 + Release
+
+on:
+  workflow_dispatch:
+
+env:
+  REMOTE_REPOSITORY: openwrt/openwrt
+  REMOTE_BRANCH: main
+  RELEASE_PREFIX: bpi-r4
+  DEVICE_CONFIG: configs/bpi-r4_config
+  BUILD_JOBS: 2                  # Bezpieczna wartość dla darmowego planu
+  KEEP_RELEASES: 3               # Ilość zachowywanych wersji
+
+jobs:
+  get_revision:
+    name: 🔍 Get OpenWRT Revision
+    runs-on: ubuntu-24.04
+    outputs:
+      revision: ${{ steps.get_revision.outputs.revision }}
+      commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
+      timestamp: ${{ steps.timestamp.outputs.timestamp }}
+    steps:
+      - name: 🛠️ Checkout OpenWRT
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.REMOTE_REPOSITORY }}
+          ref: ${{ env.REMOTE_BRANCH }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: 🔄 Update tags
+        run: git fetch --tags -f
+
+      - name: 🔢 Get revision
+        id: get_revision
+        run: |
+          chmod +x ./scripts/getver.sh
+          echo "revision=$(./scripts/getver.sh)" >> $GITHUB_OUTPUT
+
+      - name: 🔑 Get commit SHA
+        id: get_commit_sha
+        run: echo "commit_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: 🕒 Generate timestamp
+        id: timestamp
+        run: echo "timestamp=$(date -u +'%Y%m%dT%H%M%SZ')" >> $GITHUB_OUTPUT
+
+  build:
+    name: 🏗️ Build Firmware
+    needs: [get_revision]
+    runs-on: ubuntu-24.04
+    env:
+      REVISION: ${{ needs.get_revision.outputs.revision }}
+      TIMESTAMP: ${{ needs.get_revision.outputs.timestamp }}
+
+    steps:
+      - name: 📦 Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            /var/cache/apt/archives
+            openwrt/dl
+            openwrt/ccache
+          key: ${{ runner.os }}-${{ env.REVISION }}-${{ hashFiles('.config') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.REVISION }}-
+
+      - name: ⚙️ Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential ccache clang flex bison g++ gawk \
+            gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev \
+            python3-setuptools rsync swig unzip zlib1g-dev file wget curl
+          sudo apt-get autoremove -y
+
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.REMOTE_REPOSITORY }}
+          ref: ${{ env.REMOTE_BRANCH }}
+
+      - name: 🔄 Update feeds
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: ⚙️ Apply config
+        run: |
+          curl -fLSs "https://raw.githubusercontent.com/${{ github.repository_owner }}/Bpi-r4-OpenWRT-Build/master/${{ env.DEVICE_CONFIG }}" > .config
+          make defconfig
+
+      - name: 🛠️ Custom configuration
+        run: |
+          mkdir -p files/sbin files/etc/profile.d files/etc/uci-defaults
+          
+          # Pobierz pliki konfiguracyjne z retries
+          wget --tries=3 --timeout=30 --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://raw.githubusercontent.com/${{ github.repository_owner }}/OpenWRT_packages/master/sysinfo/files/sbin/sysinfo.sh" \
+            -O files/sbin/sysinfo.sh || exit 1
+          
+          wget --tries=3 --timeout=30 --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://raw.githubusercontent.com/${{ github.repository_owner }}/OpenWRT_packages/master/sysinfo/files/etc/profile.d/99-sysinfo.sh" \
+            -O files/etc/profile.d/99-sysinfo.sh || exit 1
+          
+          chmod +x files/sbin/sysinfo.sh
+
+          # Konfiguracja UCI
+          cat > files/etc/uci-defaults/99-custom-config << EOF
+          uci set wireless.radio0.disabled=0
+          uci commit
+          /etc/init.d/dnscrypt-proxy enable
+          /etc/init.d/dnscrypt-proxy restart
+          /etc/init.d/adblock restart
+          EOF
+
+      - name: 🧹 Optimize config
+        run: |
+          grep "=m" .config | grep -v 'CONFIG_PACKAGE_libustream-mbedtls=m' | \
+          while read -r line; do \
+            module=$(echo "$line" | cut -f1 -d'='); \
+            sed -i "s/^$line$/# $module is not set/" .config; \
+          done
+
+      - name: 📦 Download packages
+        run: make -j ${{ env.BUILD_JOBS }} download
+
+      - name: 🏭 Build image
+        run: |
+          CURRENT_REV=$(./scripts/getver.sh)
+          make -j ${{ env.BUILD_JOBS }} world \
+            REVISION="$CURRENT_REV" \
+            CCACHE=1 \
+            BUILD_LOG=1 > build.log 2>&1 || (cat build.log && exit 1)
+
+      - name: 🏷️ Rename artifact
+        run: |
+          ORIGINAL_IMAGE="$(find bin/targets/mediatek/filogic -name 'openwrt-*-sysupgrade.itb')"
+          NEW_NAME="openwrt-${{ env.REVISION }}_${{ env.TIMESTAMP }}-bpi-r4.itb"
+          mv "$ORIGINAL_IMAGE" "bin/targets/mediatek/filogic/$NEW_NAME"
+
+      - name: 📤 Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-images
+          path: |
+            bin/targets/**/*
+            build.log
+
+  release:
+    name: 🚀 Create Release
+    needs: [build, get_revision]
+    if: needs.build.result == 'success'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: 📥 Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware-images
+          path: artifacts
+
+      - name: 🗜️ Extract artifacts
+        run: |
+          mkdir -p bin/targets
+          mv artifacts/* bin/targets/
+
+      - name: 🏷️ Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: bin/targets/mediatek/filogic/*
+          tag_name: ${{ env.RELEASE_PREFIX }}-${{ env.REVISION }}
+          name: "OpenWRT ${{ env.REVISION }} (${{ env.TIMESTAMP }})"
+          body: |
+            ### 🛠️ Build Details
+            - **Device:** Banana Pi R4
+            - **Build Date:** ${{ env.TIMESTAMP }}
+            - **Commit:** [${{ needs.get_revision.outputs.commit_sha }}](https://github.com/${{ env.REMOTE_REPOSITORY }}/commit/${{ needs.get_revision.outputs.commit_sha }})
+            - **Compiler:** $(g++ --version | head -n1)
+
+      - name: 🧹 Clean old releases
+        uses: dev-drprasad/delete-older-releases@master
+        with:
+          keep_latest: ${{ env.KEEP_RELEASES }}
+          delete_tags: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
