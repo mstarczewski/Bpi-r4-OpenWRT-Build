@@ -1,0 +1,118 @@
+# =================================
+# Target System & Architecture
+# =================================
+CONFIG_TARGET_mediatek=y
+CONFIG_TARGET_mediatek_filogic=y
+CONFIG_TARGET_mediatek_filogic_DEVICE_bananapi_bpi-r4=y
+
+# =================================
+# Kernel & Build Configuration
+# =================================
+CONFIG_LINUX_6_6=y
+CONFIG_USE_LTO=y
+CONFIG_USE_MOLD=y
+CONFIG_STRIP_KERNEL_EXPORTS=y
+CONFIG_KERNEL_CFQ_GROUP_IOSCHED=y
+CONFIG_KERNEL_TCP_MEMORY=y
+
+# =================================
+# Hardware Acceleration & Drivers
+# =================================
+CONFIG_PACKAGE_kmod-mtk-hwnat=y
+CONFIG_PACKAGE_kmod-mtk-eth-alt=y
+CONFIG_PACKAGE_kmod-mtk-eth-alt-2g5=y
+CONFIG_PACKAGE_kmod-mtk-eth-alt-10g=y
+CONFIG_PACKAGE_kmod-mtk-sgmii=y
+CONFIG_PACKAGE_kmod-i2c-mt7621=y
+CONFIG_PACKAGE_kmod-usb3=y
+CONFIG_PACKAGE_kmod-usb-storage=y
+
+# =================================
+# Wireless Configuration (MT7996)
+# =================================
+CONFIG_DEFAULT_kmod-mt7996-233-firmware=y
+CONFIG_DEFAULT_kmod-mt7996-firmware=y
+CONFIG_PACKAGE_kmod-mt7996-common=y
+CONFIG_PACKAGE_hostapd-wolfssl=y
+
+# =================================
+# Security & Cryptography
+# =================================
+CONFIG_OPENSSL_OPTIMIZE_SPEED=y
+CONFIG_OPENSSL_ENGINE=y
+CONFIG_OPENSSL_WITH_EC=y
+CONFIG_PACKAGE_libopenssl-devcrypto=y
+CONFIG_PACKAGE_kmod-cryptodev=y
+CONFIG_PACKAGE_ca-certificates=y
+
+# =================================
+# Core Packages & LuCI
+# =================================
+CONFIG_PACKAGE_luci=y
+CONFIG_PACKAGE_luci-ssl-openssl=y
+CONFIG_PACKAGE_luci-base=y
+CONFIG_PACKAGE_luci-mod-admin-full=y
+CONFIG_PACKAGE_luci-mod-network=y
+CONFIG_PACKAGE_luci-mod-status=y
+CONFIG_PACKAGE_luci-mod-system=y
+CONFIG_PACKAGE_luci-theme-bootstrap=y
+CONFIG_PACKAGE_luci-app-firewall=y
+CONFIG_PACKAGE_luci-app-opkg=y
+
+# =================================
+# Network Services & QoS
+# =================================
+CONFIG_PACKAGE_qosify=y
+CONFIG_PACKAGE_iptables-mod-extra=y
+CONFIG_PACKAGE_tcpdump=y
+CONFIG_PACKAGE_ethtool=y
+CONFIG_PACKAGE_irqbalance=y
+
+# =================================
+# VPN & Tunneling
+# =================================
+CONFIG_PACKAGE_kmod-wireguard=y
+CONFIG_PACKAGE_wireguard-tools=y
+CONFIG_PACKAGE_luci-proto-wireguard=y
+
+# =================================
+# System Utilities
+# =================================
+CONFIG_PACKAGE_bash=y
+CONFIG_PACKAGE_htop=y
+CONFIG_PACKAGE_nano=y
+CONFIG_PACKAGE_curl=y
+CONFIG_PACKAGE_lm-sensors=y
+CONFIG_PACKAGE_zram-swap=y
+CONFIG_PACKAGE_usbutils=y
+
+# =================================
+# Monitoring & Logging
+# =================================
+CONFIG_PACKAGE_collectd=y
+CONFIG_PACKAGE_collectd-mod-cpu=y
+CONFIG_PACKAGE_collectd-mod-memory=y
+CONFIG_PACKAGE_collectd-mod-network=y
+CONFIG_PACKAGE_collectd-mod-sensors=y
+CONFIG_PACKAGE_luci-app-statistics=y
+
+# =================================
+# Storage & Filesystems
+# =================================
+CONFIG_PACKAGE_kmod-fs-exfat=y
+CONFIG_PACKAGE_kmod-fs-ntfs3=y
+CONFIG_PACKAGE_ntfs-3g=y
+
+# =================================
+# ACME & Certificates
+# =================================
+CONFIG_PACKAGE_acme=y
+CONFIG_PACKAGE_acme-dnsapi=y
+CONFIG_PACKAGE_wget-ssl=y
+CONFIG_PACKAGE_socat=y
+
+# =================================
+# Development & Debugging
+# =================================
+CONFIG_PACKAGE_gdb=y
+CONFIG_PACKAGE_strace=y
