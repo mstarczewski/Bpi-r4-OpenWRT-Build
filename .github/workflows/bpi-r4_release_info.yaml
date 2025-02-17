@@ -87,9 +87,13 @@ jobs:
       - name: Add custom configuration
         run: |
           mkdir -p files/sbin files/etc/profile.d files/etc/uci-defaults
-          wget "https://raw.githubusercontent.com/${{ github.repository_owner }}/OpenWRT_packages/master/sysinfo/files/sbin/sysinfo.sh" -P files/sbin
+          wget --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          "https://raw.githubusercontent.com/${{ github.repository_owner }}/OpenWRT_packages/master/sysinfo/files/sbin/sysinfo.sh" \
+          -P files/sbin
           chmod +x files/sbin/sysinfo.sh
-          wget "https://raw.githubusercontent.com/${{ github.repository_owner }}/OpenWRT_packages/master/sysinfo/files/etc/profile.d/99-sysinfo.sh" -P files/etc/profile.d
+          wget --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          "https://raw.githubusercontent.com/${{ github.repository_owner }}/OpenWRT_packages/master/sysinfo/files/etc/profile.d/99-sysinfo.sh" \
+          -P files/etc/profile.d
           # Konfiguracja UCI
           cat > files/etc/uci-defaults/xxx_config << EOF
           uci set wireless.radio0.disabled=0
