@@ -20,8 +20,8 @@ CONFIG_KERNEL_TCP_MEMORY=y
 # =================================
 CONFIG_PACKAGE_kmod-mtk-hwnat=y
 CONFIG_PACKAGE_kmod-mtk-eth-alt=y
-CONFIG_PACKAGE_kmod-mtk-eth-alt-2g5=y
-CONFIG_PACKAGE_kmod-mtk-eth-alt-10g=y
+#CONFIG_PACKAGE_kmod-mtk-eth-alt-2g5=y
+#CONFIG_PACKAGE_kmod-mtk-eth-alt-10g=y
 CONFIG_PACKAGE_kmod-mtk-sgmii=y
 CONFIG_PACKAGE_kmod-i2c-mt7621=y
 CONFIG_PACKAGE_kmod-usb3=y
