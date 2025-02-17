@@ -84,12 +84,13 @@ jobs:
           curl -SL https://raw.githubusercontent.com/${{ github.repository_owner }}/Bpi-r4-OpenWRT-Build/master/${{ env.DEVICE_CONFIG }} > .config
           make defconfig
 
-      - name: Custom configuration
+      - name: Add custom configuration
         run: |
           mkdir -p files/sbin files/etc/profile.d files/etc/uci-defaults
-          wget https://raw.githubusercontent.com/mstarczewski/OpenWRT_packages/master/sysinfo/files/sbin/sysinfo.sh -P files/sbin
+          wget "https://raw.githubusercontent.com/${{ github.repository_owner }}/OpenWRT_packages/master/sysinfo/files/sbin/sysinfo.sh" -P files/sbin
           chmod +x files/sbin/sysinfo.sh
-          wget https://raw.githubusercontent.com/mstarczewski/OpenWRT_packages/master/sysinfo/files/etc/profile.d/99-sysinfo.sh -P files/etc/profile.d
+          wget "https://raw.githubusercontent.com/${{ github.repository_owner }}/OpenWRT_packages/master/sysinfo/files/etc/profile.d/99-sysinfo.sh" -P files/etc/profile.d
+          # Konfiguracja UCI
           cat > files/etc/uci-defaults/xxx_config << EOF
           uci set wireless.radio0.disabled=0
           uci commit
