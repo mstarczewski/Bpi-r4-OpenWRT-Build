@@ -1,4 +1,4 @@
-name: 🛠️ Build OpenWRT Bpi-R4 snapshot
+name: 🛠️ Build OpenWRT Bpi-R4 + Release
 
 on:
   workflow_dispatch:
@@ -10,7 +10,6 @@ env:
   DEVICE_CONFIG: configs/bpi-r4_config
   BUILD_JOBS: 2
   KEEP_RELEASES: 3
-  TAG_PREFIX: v
 
 jobs:
   get_revision:
@@ -36,7 +35,7 @@ jobs:
         id: get_revision
         run: |
           chmod +x ./scripts/getver.sh
-          REVISION=$(./scripts/getver.sh | sed 's/\//-/g')
+          REVISION=$(./scripts/getver.sh | sed 's/[^a-zA-Z0-9]/-/g')
           echo "revision=${REVISION}" >> $GITHUB_OUTPUT
 
       - name: 🔑 Get commit SHA
@@ -54,101 +53,35 @@ jobs:
     env:
       REVISION: ${{ needs.get_revision.outputs.revision }}
       TIMESTAMP: ${{ needs.get_revision.outputs.timestamp }}
+
     steps:
-      - name: 📦 Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            openwrt/dl
-            openwrt/ccache
-          key: ${{ runner.os }}-${{ env.REVISION }}-${{ hashFiles('.config') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ env.REVISION }}-
-
-      - name: ⚙️ Install dependencies
+      - name: 🏷️ Rename artifacts
         run: |
-          sudo mkdir -p /tmp/apt-cache
-          sudo apt-get update -o Dir::Cache::archives=/tmp/apt-cache
-          sudo apt-get install -y \
-            build-essential ccache clang flex bison g++ gawk \
-            gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev \
-            python3-setuptools rsync swig unzip zlib1g-dev file wget curl \
-            --option Dir::Cache::archives=/tmp/apt-cache
-          sudo apt-get autoremove -y
-
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.REMOTE_REPOSITORY }}
-          ref: ${{ env.REMOTE_BRANCH }}
-          path: openwrt
-
-      - name: 🔄 Update feeds
-        run: |
-          cd openwrt
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
-
-      - name: ⚙️ Apply config
-        run: |
-          cd openwrt
-          curl -fLSs "https://raw.githubusercontent.com/${{ github.repository_owner }}/Bpi-r4-OpenWRT-Build/master/${{ env.DEVICE_CONFIG }}" > .config
-          make defconfig
-
-      - name: 🛠️ Custom configuration
-        run: |
-          cd openwrt
-          mkdir -p files/sbin files/etc/profile.d files/etc/uci-defaults
-          wget --tries=3 --timeout=30 --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            "https://raw.githubusercontent.com/${{ github.repository_owner }}/OpenWRT_packages/master/sysinfo/files/sbin/sysinfo.sh" \
-            -O files/sbin/sysinfo.sh || exit 1
-          wget --tries=3 --timeout=30 --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            "https://raw.githubusercontent.com/${{ github.repository_owner }}/OpenWRT_packages/master/sysinfo/files/etc/profile.d/99-sysinfo.sh" \
-            -O files/etc/profile.d/99-sysinfo.sh || exit 1
-          chmod +x files/sbin/sysinfo.sh
-          cat > files/etc/uci-defaults/99-custom-config << EOF
-          uci set wireless.radio0.disabled=0
-          uci commit
-          /etc/init.d/dnscrypt-proxy enable
-          /etc/init.d/dnscrypt-proxy restart
-          /etc/init.d/adblock restart
-          EOF
-
-      - name: 🧹 Optimize config
-        run: |
-          cd openwrt
-          grep "=m" .config | grep -v 'CONFIG_PACKAGE_libustream-mbedtls=m' | \
-          while read -r line; do \
-            module=$(echo "$line" | cut -f1 -d'='); \
-            sed -i "s/^$line$/# $module is not set/" .config; \
+          cd openwrt/bin/targets/mediatek/filogic
+          
+          # Zmień nazwy wszystkich plików z zachowaniem typu
+          for file in *; do
+            if [[ "$file" == *"bananapi_bpi-r4"* ]]; then
+              # Ekstrakcja typu obrazu (np. sysupgrade, sdcard, itp.)
+              image_type=$(echo "$file" | grep -oE '(sysupgrade|sdcard|recovery|snand|emmc)')
+              
+              new_name=$(echo "$file" | sed \
+                -e "s/bananapi_bpi-r4/bananapi_bpi-r4-${REVISION}_${TIMESTAMP}/" \
+                -e "s/-squashfs//" \
+                -e "s/\(.*\)\./\1-${image_type}./")
+              
+              mv -v "$file" "$new_name"
+            fi
           done
 
-      - name: 📦 Download packages
-        run: |
-          cd openwrt
-          make -j ${{ env.BUILD_JOBS }} download
-
-      - name: 🏭 Build image
-        run: |
-          cd openwrt
-          CURRENT_REV=$(./scripts/getver.sh | sed 's/\//-/g')
-          make -j ${{ env.BUILD_JOBS }} world \
-            REVISION="$CURRENT_REV" \
-            CCACHE=1 \
-            BUILD_LOG=1 > build.log 2>&1 || (cat build.log && exit 1)
-
-      - name: 🏷️ Rename artifact
-        run: |
-          cd openwrt
-          ORIGINAL_IMAGE=$(find bin/targets/mediatek/filogic -name 'openwrt-*-sysupgrade.itb')
-          NEW_NAME="openwrt-${{ env.REVISION }}_${{ env.TIMESTAMP }}-bpi-r4.itb"
-          mv "$ORIGINAL_IMAGE" "bin/targets/mediatek/filogic/$NEW_NAME"
+          echo "=== Final files ==="
+          ls -lh
 
       - name: 📤 Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: firmware-images
-          path: openwrt/bin/targets/**/*
+          path: openwrt/bin/targets/mediatek/filogic/*
 
   release:
     name: 🚀 Create Release
@@ -157,6 +90,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+
     steps:
       - name: 📥 Download artifacts
         uses: actions/download-artifact@v4
@@ -164,25 +98,26 @@ jobs:
           name: firmware-images
           path: artifacts
 
-      - name: 🗜️ Extract artifacts
+      - name: 🗜️ Prepare release files
         run: |
-          mkdir -p bin/targets/mediatek/filogic
-          find artifacts/ -name '*.itb' -exec cp -v {} bin/targets/mediatek/filogic/ \;
-          echo "=== Release files ==="
-          ls -lh bin/targets/mediatek/filogic/
+          mkdir -p release_files
+          find artifacts/ -type f -exec cp -v {} release_files/ \;
+          
+          echo "=== Files to release ==="
+          ls -lh release_files/
 
       - name: 🏷️ Create release
         uses: softprops/action-gh-release@v1
         with:
-          files: bin/targets/mediatek/filogic/*
-          tag_name: ${{ env.RELEASE_PREFIX }}-${{ env.TAG_PREFIX }}${{ env.REVISION }}
-          name: "OpenWRT ${{ env.REVISION }} (${{ env.TIMESTAMP }})"
+          files: release_files/*
+          tag_name: ${{ env.RELEASE_PREFIX }}-${{ needs.get_revision.outputs.revision }}
+          name: "Openwrt-bpi_r4-${{ needs.get_revision.outputs.revision }}_${{ needs.get_revision.outputs.timestamp }}"
           body: |
             ### Build Details
             - **Device:** Banana Pi R4
-            - **Build Date:** ${{ env.TIMESTAMP }}
+            - **Revision:** ${{ needs.get_revision.outputs.revision }}
+            - **Build Date:** ${{ needs.get_revision.outputs.timestamp }}
             - **Commit:** [${{ needs.get_revision.outputs.commit_sha }}](https://github.com/${{ env.REMOTE_REPOSITORY }}/commit/${{ needs.get_revision.outputs.commit_sha }})
-            - **Compiler:** $(g++ --version | head -n1)
 
       - name: 🧹 Clean old releases
         uses: dev-drprasad/delete-older-releases@master
