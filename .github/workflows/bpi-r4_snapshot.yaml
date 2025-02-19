@@ -30,6 +30,8 @@ jobs:
     name: 🏗️ Build BPI-R4
     needs: [check_commits]
     runs-on: ubuntu-24.04
+    outputs:
+      openwrt_revision: ${{ steps.get_openwrt_rev.outputs.openwrt_revision }}
     steps:
       - name: 🔧 Set up environment
         run: echo "IMAGE_TIMESTAMP=$(date +'%Y_%m_%d_%H_%M_%S')" >> $GITHUB_ENV
@@ -59,7 +61,8 @@ jobs:
             exit 1
           fi
           echo "OPENWRT_REVISION=$REV" >> $GITHUB_ENV
-          echo "OpenWRT revision is $REV"
+          echo "openwrt_revision=$REV" >> $GITHUB_OUTPUT
+          echo ">>> OpenWRT revision is: $REV <<<"
 
       - name: 🔄 Update and install feeds
         run: |
@@ -74,7 +77,6 @@ jobs:
       - name: ⚙️ Add custom configuration
         run: |
           mkdir -p files/sbin files/etc/profile.d files/etc/uci-defaults
-          # Pobierz pliki konfiguracyjne z retries
           wget --tries=3 --timeout=30 --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             "https://raw.githubusercontent.com/${{ github.repository_owner }}/OpenWRT_packages/master/sysinfo/files/sbin/sysinfo.sh" \
             -O files/sbin/sysinfo.sh || exit 1
@@ -82,7 +84,6 @@ jobs:
             "https://raw.githubusercontent.com/${{ github.repository_owner }}/OpenWRT_packages/master/sysinfo/files/etc/profile.d/99-sysinfo.sh" \
             -O files/etc/profile.d/99-sysinfo.sh || exit 1
           chmod +x files/sbin/sysinfo.sh
-          # Konfiguracja UCI
           cat > files/etc/uci-defaults/99-custom-config << 'EOF'
           uci set wireless.radio0.disabled=0
           uci commit
@@ -146,9 +147,9 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: bin/targets/mediatek/filogic/*
-          tag_name: ${{ env.RELEASE_PREFIX }}-${{ env.REMOTE_BRANCH }}-${{ env.RELEASE_DATE }}-${{ env.OPENWRT_REVISION }}
-          name: "OpenWRT BPI-R4 - ${{ env.REMOTE_BRANCH }} - ${{ env.RELEASE_DATE }} - OpenWRT Revision: ${{ env.OPENWRT_REVISION }}"
+          tag_name: ${{ env.RELEASE_PREFIX }}-${{ env.REMOTE_BRANCH }}-${{ env.RELEASE_DATE }}-${{ needs.build.outputs.openwrt_revision }}
+          name: "OpenWRT BPI-R4 - ${{ env.REMOTE_BRANCH }} - ${{ env.RELEASE_DATE }} - OpenWRT Revision: ${{ needs.build.outputs.openwrt_revision }}"
           body: |
             Updated prebuilt images for ${{ env.RELEASE_DATE }}.
-            OpenWRT Revision: ${{ env.OPENWRT_REVISION }}
+            OpenWRT Revision: ${{ needs.build.outputs.openwrt_revision }}
             Build Commit: ${{ needs.check_commits.outputs.latest_commit_sha }}
