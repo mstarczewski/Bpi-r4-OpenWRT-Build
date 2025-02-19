@@ -8,74 +8,96 @@ env:
   REMOTE_BRANCH: main
   RELEASE_PREFIX: bpi-r4
   DEVICE_CONFIG: configs/bpi-r4_config
+  BUILD_JOBS: 2
+  KEEP_RELEASES: 3
+  TAG_PREFIX: v
 
 jobs:
-  check_commits:
-    name: 🔍 Check Commits
+  get_revision:
+    name: 🔍 Get OpenWRT Revision
     runs-on: ubuntu-24.04
     outputs:
-      latest_commit_sha: ${{ steps.get_sha.outputs.latest_commit_sha }}
+      revision: ${{ steps.get_revision.outputs.revision }}
+      commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
+      timestamp: ${{ steps.timestamp.outputs.timestamp }}
     steps:
-      - name: 📥 Checkout remote repository
+      - name: 🛠️ Checkout OpenWRT
         uses: actions/checkout@v4
         with:
           repository: ${{ env.REMOTE_REPOSITORY }}
           ref: ${{ env.REMOTE_BRANCH }}
+          fetch-depth: 0
+          fetch-tags: true
 
-      - name: 🔢 Get the latest commit SHA
-        id: get_sha
-        run: echo "latest_commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+      - name: 🔄 Update tags
+        run: git fetch --tags -f
 
-  build:
-    name: 🏗️ Build BPI-R4
-    needs: [check_commits]
-    runs-on: ubuntu-24.04
-    outputs:
-      openwrt_revision: ${{ steps.get_openwrt_rev.outputs.openwrt_revision }}
-    steps:
-      - name: 🔧 Set up environment
-        run: echo "IMAGE_TIMESTAMP=$(date +'%Y_%m_%d_%H_%M_%S')" >> $GITHUB_ENV
-
-      - name: 💻 Install dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y \
-            build-essential clang flex bison g++ gawk \
-            gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev \
-            python3-setuptools rsync swig unzip zlib1g-dev file wget curl
-          sudo apt full-upgrade -y
-
-      - name: 📥 Checkout remote repository
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.REMOTE_REPOSITORY }}
-          ref: ${{ env.REMOTE_BRANCH }}
-
-      - name: 🔍 Get OpenWRT revision
-        id: get_openwrt_rev
+      - name: 🔢 Get revision
+        id: get_revision
         run: |
           chmod +x ./scripts/getver.sh
-          REV=$(./scripts/getver.sh)
-          if [ -z "$REV" ]; then
-            echo "Error: OpenWRT revision is empty"
-            exit 1
-          fi
-          echo "OPENWRT_REVISION=$REV" >> $GITHUB_ENV
-          echo "openwrt_revision=$REV" >> $GITHUB_OUTPUT
-          echo ">>> OpenWRT revision is: $REV <<<"
+          REVISION=$(./scripts/getver.sh | sed 's/\//-/g')
+          echo "revision=${REVISION}" >> $GITHUB_OUTPUT
 
-      - name: 🔄 Update and install feeds
+      - name: 🔑 Get commit SHA
+        id: get_commit_sha
+        run: echo "commit_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: 🕒 Generate timestamp
+        id: timestamp
+        run: echo "timestamp=$(date -u +'%Y%m%dT%H%M%SZ')" >> $GITHUB_OUTPUT
+
+  build:
+    name: 🏗️ Build Firmware
+    needs: [get_revision]
+    runs-on: ubuntu-24.04
+    env:
+      REVISION: ${{ needs.get_revision.outputs.revision }}
+      TIMESTAMP: ${{ needs.get_revision.outputs.timestamp }}
+    steps:
+      - name: 📦 Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            openwrt/dl
+            openwrt/ccache
+          key: ${{ runner.os }}-${{ env.REVISION }}-${{ hashFiles('.config') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.REVISION }}-
+
+      - name: ⚙️ Install dependencies
         run: |
+          sudo mkdir -p /tmp/apt-cache
+          sudo apt-get update -o Dir::Cache::archives=/tmp/apt-cache
+          sudo apt-get install -y \
+            build-essential ccache clang flex bison g++ gawk \
+            gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev \
+            python3-setuptools rsync swig unzip zlib1g-dev file wget curl \
+            --option Dir::Cache::archives=/tmp/apt-cache
+          sudo apt-get autoremove -y
+
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.REMOTE_REPOSITORY }}
+          ref: ${{ env.REMOTE_BRANCH }}
+          path: openwrt
+
+      - name: 🔄 Update feeds
+        run: |
+          cd openwrt
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: 🛠️ Configure firmware image
+      - name: ⚙️ Apply config
         run: |
-          curl -SL "https://raw.githubusercontent.com/${{ github.repository_owner }}/Bpi-r4-OpenWRT-Build/master/${{ env.DEVICE_CONFIG }}" > .config
+          cd openwrt
+          curl -fLSs "https://raw.githubusercontent.com/${{ github.repository_owner }}/Bpi-r4-OpenWRT-Build/master/${{ env.DEVICE_CONFIG }}" > .config
           make defconfig
 
-      - name: ⚙️ Add custom configuration
+      - name: 🛠️ Custom configuration
         run: |
+          cd openwrt
           mkdir -p files/sbin files/etc/profile.d files/etc/uci-defaults
           wget --tries=3 --timeout=30 --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             "https://raw.githubusercontent.com/${{ github.repository_owner }}/OpenWRT_packages/master/sysinfo/files/sbin/sysinfo.sh" \
@@ -84,7 +106,7 @@ jobs:
             "https://raw.githubusercontent.com/${{ github.repository_owner }}/OpenWRT_packages/master/sysinfo/files/etc/profile.d/99-sysinfo.sh" \
             -O files/etc/profile.d/99-sysinfo.sh || exit 1
           chmod +x files/sbin/sysinfo.sh
-          cat > files/etc/uci-defaults/99-custom-config << 'EOF'
+          cat > files/etc/uci-defaults/99-custom-config << EOF
           uci set wireless.radio0.disabled=0
           uci commit
           /etc/init.d/dnscrypt-proxy enable
@@ -92,64 +114,80 @@ jobs:
           /etc/init.d/adblock restart
           EOF
 
-      - name: 🧹 Optimize build configuration
+      - name: 🧹 Optimize config
         run: |
+          cd openwrt
           grep "=m" .config | grep -v 'CONFIG_PACKAGE_libustream-mbedtls=m' | \
-          while read -r line; do
-            module=$(echo "$line" | cut -f1 -d'=')
-            sed -i "s/^$line$/# $module is not set/" .config
+          while read -r line; do \
+            module=$(echo "$line" | cut -f1 -d'='); \
+            sed -i "s/^$line$/# $module is not set/" .config; \
           done
 
-      - name: 📦 Download dependencies
-        run: make -j $(nproc) download || exit 1
-
-      - name: 🏭 Build the firmware image
+      - name: 📦 Download packages
         run: |
-          make -j $(nproc) world > build.log 2>&1 || (cat build.log && exit 1)
+          cd openwrt
+          make -j ${{ env.BUILD_JOBS }} download
 
-      - name: 🏷️ Rename firmware image
+      - name: 🏭 Build image
         run: |
-          ORIGINAL_IMAGE=$(find bin/targets/mediatek/filogic -name 'openwrt-mediatek-filogic-bananapi_bpi-r4-squashfs-sysupgrade.itb')
-          if [ -z "$ORIGINAL_IMAGE" ]; then
-            echo "Error: Firmware image not found"
-            exit 1
-          fi
-          NEW_IMAGE="bin/targets/mediatek/filogic/openwrt-mediatek-filogic-bananapi_bpi-r4_${OPENWRT_REVISION}_${IMAGE_TIMESTAMP}-squashfs-sysupgrade.itb"
-          mv "$ORIGINAL_IMAGE" "$NEW_IMAGE"
+          cd openwrt
+          CURRENT_REV=$(./scripts/getver.sh | sed 's/\//-/g')
+          make -j ${{ env.BUILD_JOBS }} world \
+            REVISION="$CURRENT_REV" \
+            CCACHE=1 \
+            BUILD_LOG=1 > build.log 2>&1 || (cat build.log && exit 1)
 
-      - name: 📦 Package output
-        run: tar -cvf bpi_r4-images.tar bin/targets/mediatek/filogic
+      - name: 🏷️ Rename artifact
+        run: |
+          cd openwrt
+          ORIGINAL_IMAGE=$(find bin/targets/mediatek/filogic -name 'openwrt-*-sysupgrade.itb')
+          NEW_NAME="openwrt-${{ env.REVISION }}_${{ env.TIMESTAMP }}-bpi-r4.itb"
+          mv "$ORIGINAL_IMAGE" "bin/targets/mediatek/filogic/$NEW_NAME"
 
       - name: 📤 Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: bpi_r4-images
-          path: bpi_r4-images.tar
+          name: firmware-images
+          path: openwrt/bin/targets/**/*
 
   release:
-    name: 🚀 Create release
-    needs: [build, check_commits]
+    name: 🚀 Create Release
+    needs: [build, get_revision]
     if: needs.build.result == 'success'
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
-      - name: ⬇️ Download artifacts
+      - name: 📥 Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: bpi_r4-images
+          name: firmware-images
+          path: artifacts
 
       - name: 🗜️ Extract artifacts
-        run: tar xf bpi_r4-images.tar
-
-      - name: 📅 Get current date
-        run: echo "RELEASE_DATE=$(date +%F)" >> $GITHUB_ENV
+        run: |
+          mkdir -p bin/targets/mediatek/filogic
+          find artifacts/ -name '*.itb' -exec cp -v {} bin/targets/mediatek/filogic/ \;
+          echo "=== Release files ==="
+          ls -lh bin/targets/mediatek/filogic/
 
       - name: 🏷️ Create release
         uses: softprops/action-gh-release@v1
         with:
           files: bin/targets/mediatek/filogic/*
-          tag_name: ${{ env.RELEASE_PREFIX }}-${{ env.REMOTE_BRANCH }}-${{ env.RELEASE_DATE }}-${{ needs.build.outputs.openwrt_revision }}
-          name: "OpenWRT BPI-R4 - ${{ env.REMOTE_BRANCH }} - ${{ env.RELEASE_DATE }} - OpenWRT Revision: ${{ needs.build.outputs.openwrt_revision }}"
+          tag_name: ${{ env.RELEASE_PREFIX }}-${{ env.TAG_PREFIX }}${{ env.REVISION }}
+          name: "OpenWRT ${{ env.REVISION }} (${{ env.TIMESTAMP }})"
           body: |
-            Updated prebuilt images for ${{ env.RELEASE_DATE }}.
-            OpenWRT Revision: ${{ needs.build.outputs.openwrt_revision }}
-            Build Commit: ${{ needs.check_commits.outputs.latest_commit_sha }}
+            ### Build Details
+            - **Device:** Banana Pi R4
+            - **Build Date:** ${{ env.TIMESTAMP }}
+            - **Commit:** [${{ needs.get_revision.outputs.commit_sha }}](https://github.com/${{ env.REMOTE_REPOSITORY }}/commit/${{ needs.get_revision.outputs.commit_sha }})
+            - **Compiler:** $(g++ --version | head -n1)
+
+      - name: 🧹 Clean old releases
+        uses: dev-drprasad/delete-older-releases@master
+        with:
+          keep_latest: ${{ env.KEEP_RELEASES }}
+          delete_tags: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
