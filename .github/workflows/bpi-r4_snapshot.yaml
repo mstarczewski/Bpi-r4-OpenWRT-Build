@@ -35,8 +35,9 @@ jobs:
         id: get_revision
         run: |
           chmod +x ./scripts/getver.sh
-          REVISION=$(./scripts/getver.sh | sed 's/[\/]/-/g')
-          echo "revision=${REVISION}" >> $GITHUB_OUTPUT
+          RAW_REVISION=$(./scripts/getver.sh)
+          SAFE_REVISION=$(echo "$RAW_REVISION" | sed 's/[\/]/-/g; s/[^a-zA-Z0-9_-]//g')
+          echo "revision=${SAFE_REVISION}" >> $GITHUB_OUTPUT
 
       - name: 🔑 Get commit SHA
         id: get_commit_sha
@@ -135,7 +136,11 @@ jobs:
       - name: 🏭 Build image
         run: |
           cd openwrt
+          BUILD_TIMESTAMP=$(date -d "${{ env.TIMESTAMP }}" +%s)
+          
           make -j ${{ env.BUILD_JOBS }} world \
+            REVISION="${{ env.REVISION }}" \
+            SOURCE_DATE_EPOCH=${BUILD_TIMESTAMP} \
             CCACHE=1 \
             BUILD_LOG=1 > build.log 2>&1 || (cat build.log && exit 1)
 
@@ -143,24 +148,16 @@ jobs:
         run: |
           cd openwrt/bin/targets/mediatek/filogic
           
-          # Formatowanie nazw plików
           for file in *; do
             if [[ "$file" == *"bananapi_bpi-r4"* ]]; then
-              # Ekstrakcja typu obrazu
               image_type=$(echo "$file" | grep -oE '(sysupgrade|sdcard|recovery|snand|emmc|bl31|preloader)')
-              
-              # Nowa nazwa z zachowaniem typu
               new_name=$(echo "$file" | sed \
                 -e "s/bananapi_bpi-r4/bananapi_bpi-r4-${{ env.REVISION }}_${{ env.TIMESTAMP }}/" \
                 -e "s/-squashfs//" \
                 -e "s/\(.*\)\./\1-$image_type./")
-              
               mv -v "$file" "$new_name"
             fi
           done
-
-          echo "=== Final files ==="
-          ls -lh
 
       - name: 📤 Upload artifacts
         uses: actions/upload-artifact@v4
@@ -187,15 +184,14 @@ jobs:
         run: |
           mkdir -p release_files
           find artifacts/ -type f -exec cp -v {} release_files/ \;
-          
-          echo "=== Files to release ==="
+          echo "=== Release files ==="
           ls -lh release_files/
 
       - name: 🏷️ Create release
         uses: softprops/action-gh-release@v1
         with:
           files: release_files/*
-          tag_name: ${{ env.RELEASE_PREFIX }}-${{ needs.get_revision.outputs.revision }}
+          tag_name: ${{ env.RELEASE_PREFIX }}-v${{ needs.get_revision.outputs.revision }}
           name: "openwrt-${{ needs.get_revision.outputs.revision }}_${{ needs.get_revision.outputs.timestamp }}"
           body: |
             ### Build Details
@@ -203,7 +199,6 @@ jobs:
             - **Revision:** ${{ needs.get_revision.outputs.revision }}
             - **Build Date:** ${{ needs.get_revision.outputs.timestamp }}
             - **Commit:** [${{ needs.get_revision.outputs.commit_sha }}](https://github.com/${{ env.REMOTE_REPOSITORY }}/commit/${{ needs.get_revision.outputs.commit_sha }})
-            - **Compiler:** $(g++ --version | head -n1 | sed 's/.*version //; s/ .*//')
 
       - name: 🧹 Clean old releases
         uses: dev-drprasad/delete-older-releases@master
