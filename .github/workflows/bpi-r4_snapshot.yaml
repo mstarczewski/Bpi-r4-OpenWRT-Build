@@ -45,7 +45,7 @@ jobs:
 
       - name: 🕒 Generate timestamp
         id: timestamp
-        run: echo "timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+        run: echo "timestamp=$(date -u +'%Y%m%dT%H%M%SZ')" >> $GITHUB_OUTPUT
 
   build:
     name: 🏗️ Build Firmware
@@ -152,7 +152,7 @@ jobs:
             if [[ "$file" == *"bananapi_bpi-r4"* ]]; then
               image_type=$(echo "$file" | grep -oE '(sysupgrade|sdcard|recovery|snand|emmc|bl31|preloader)')
               new_name=$(echo "$file" | sed \
-                -e "s/bananapi_bpi-r4/bananapi_bpi-r4-${{ env.REVISION }}_$(echo "${{ env.TIMESTAMP }}" | tr -d '-:')/" \
+                -e "s/bananapi_bpi-r4/bananapi_bpi-r4-${{ env.REVISION }}_${{ env.TIMESTAMP }}/" \
                 -e "s/-squashfs//" \
                 -e "s/\(.*\)\./\1-$image_type./")
               mv -v "$file" "$new_name"
@@ -192,8 +192,8 @@ jobs:
         with:
           files: release_files/*
           tag_name: ${{ env.RELEASE_PREFIX }}-${{ needs.get_revision.outputs.revision }}
-          name: "openwrt-${{ needs.get_revision.outputs.revision }}_$(echo "${{ needs.get_revision.outputs.timestamp }}" | tr -d '-:')"
-          body: |  # Poprawione wcięcie
+          name: "openwrt-${{ needs.get_revision.outputs.revision }}_${{ needs.get_revision.outputs.timestamp }}"
+          body: |
             ### Build Details
             - **Device:** Banana Pi R4
             - **Revision:** ${{ needs.get_revision.outputs.revision }}
