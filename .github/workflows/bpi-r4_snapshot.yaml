@@ -149,24 +149,24 @@ jobs:
           cd openwrt/bin/targets/mediatek/filogic
           
           for file in *; do
-            if [[ "$file" == *"bananapi_bpi-r4"* ]]; then
-              # Pobieramy typ obrazu (może być wiele dopasowań, więc składamy w pojedynczy ciąg)
-              image_type=$(echo "$file" | grep -oE '(sysupgrade|sdcard|recovery|snand|emmc|bl31|preloader)' | tr '\n' '-' | sed 's/-$//')
+            # Pomijamy katalog 'packages' i jego zawartość
+            if [[ -d "$file" ]] && [[ "$file" == "packages" ]]; then
+              continue
+            fi
           
-              # Jeśli nie znaleziono typu obrazu, ustawiamy "unknown"
+            if [[ "$file" == *"bananapi_bpi-r4"* ]]; then
+              # Pobieramy typ obrazu
+              image_type=$(echo "$file" | grep -oE '(sysupgrade|sdcard|recovery|snand|emmc|bl31|preloader)' | tr '\n' '-' | sed 's/-$//')
               image_type=${image_type:-unknown}
           
-              # Tworzymy nową nazwę, zachowując squashfs
+              # Tworzymy nową nazwę
               new_name=$(echo "$file" | sed "s/bananapi_bpi-r4/bananapi_bpi-r4-r28863-ab80e6c684_20250220T101733Z/")
-          
-              # Dodajemy image_type tylko, jeśli istnieje
               new_name="${new_name%.*}-$image_type.${new_name##*.}"
           
               # Zmieniamy nazwę pliku
               mv -v "$file" "$new_name"
             fi
           done
-
 
       - name: 📤 Upload artifacts
         uses: actions/upload-artifact@v4
