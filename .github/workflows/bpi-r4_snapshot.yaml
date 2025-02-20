@@ -150,11 +150,18 @@ jobs:
           
           for file in *; do
             if [[ "$file" == *"bananapi_bpi-r4"* ]]; then
-              image_type=$(echo "$file" | grep -oE '(sysupgrade|sdcard|recovery|snand|emmc|bl31|preloader)')
-              new_name=$(echo "$file" | sed \
-                -e "s/bananapi_bpi-r4/bananapi_bpi-r4-${{ env.REVISION }}_${{ env.TIMESTAMP }}/" \
-                -e "s/-squashfs//" \
-                -e "s/\(.*\)\./\1-$image_type./")
+              image_type=$(echo "$file" | grep -oE '(sysupgrade|sdcard|recovery|snand|emmc|bl31|preloader)' || echo "unknown")
+              if [[ -n "$image_type" ]]; then
+                new_name=$(echo "$file" | sed \
+                  -e "s/bananapi_bpi-r4/bananapi_bpi-r4-r28863-ab80e6c684_20250220T070852Z/" \
+                  -e "s/-squashfs//" \
+                  -e "s/\(.*\)\./\1-$image_type./")
+              else
+                new_name=$(echo "$file" | sed \
+                  -e "s/bananapi_bpi-r4/bananapi_bpi-r4-r28863-ab80e6c684_20250220T070852Z/" \
+                  -e "s/-squashfs//")
+              fi
+
               mv -v "$file" "$new_name"
             fi
           done
