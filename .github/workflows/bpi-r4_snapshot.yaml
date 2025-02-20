@@ -150,23 +150,23 @@ jobs:
           
           for file in *; do
             if [[ "$file" == *"bananapi_bpi-r4"* ]]; then
-              # Pobieramy typ obrazu, jeśli brak - ustawiamy "unknown"
-              image_type=$(echo "$file" | grep -oE '(sysupgrade|sdcard|recovery|snand|emmc|bl31|preloader)')
-              image_type=${image_type:-unknown}  # Jeśli pusty, ustaw "unknown"
+              # Pobieramy typ obrazu (może być wiele dopasowań, więc składamy w pojedynczy ciąg)
+              image_type=$(echo "$file" | grep -oE '(sysupgrade|sdcard|recovery|snand|emmc|bl31|preloader)' | tr '\n' '-' | sed 's/-$//')
+          
+              # Jeśli nie znaleziono typu obrazu, ustawiamy "unknown"
+              image_type=${image_type:-unknown}
           
               # Tworzymy nową nazwę, zachowując squashfs
-              new_name=$(echo "$file" | sed \
-                -e "s/bananapi_bpi-r4/bananapi_bpi-r4-r28863-ab80e6c684_20250220T101733Z/")
+              new_name=$(echo "$file" | sed "s/bananapi_bpi-r4/bananapi_bpi-r4-r28863-ab80e6c684_20250220T101733Z/")
           
-              # Jeśli image_type nie jest pusty, dodajemy go do nazwy
-              if [[ "$image_type" != "unknown" ]]; then
-                new_name="${new_name%.*}-$image_type.${new_name##*.}"
-              fi
+              # Dodajemy image_type tylko, jeśli istnieje
+              new_name="${new_name%.*}-$image_type.${new_name##*.}"
           
               # Zmieniamy nazwę pliku
               mv -v "$file" "$new_name"
             fi
           done
+
 
       - name: 📤 Upload artifacts
         uses: actions/upload-artifact@v4
