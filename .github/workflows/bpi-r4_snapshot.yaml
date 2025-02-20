@@ -150,18 +150,20 @@ jobs:
           
           for file in *; do
             if [[ "$file" == *"bananapi_bpi-r4"* ]]; then
-              image_type=$(echo "$file" | grep -oE '(sysupgrade|sdcard|recovery|snand|emmc|bl31|preloader)' || echo "unknown")
-              if [[ -n "$image_type" ]]; then
-                new_name=$(echo "$file" | sed \
-                  -e "s/bananapi_bpi-r4/bananapi_bpi-r4-r28863-ab80e6c684_20250220T070852Z/" \
-                  -e "s/-squashfs//" \
-                  -e "s/\(.*\)\./\1-$image_type./")
-              else
-                new_name=$(echo "$file" | sed \
-                  -e "s/bananapi_bpi-r4/bananapi_bpi-r4-r28863-ab80e6c684_20250220T070852Z/" \
-                  -e "s/-squashfs//")
+              # Pobieramy typ obrazu, jeśli brak - ustawiamy "unknown"
+              image_type=$(echo "$file" | grep -oE '(sysupgrade|sdcard|recovery|snand|emmc|bl31|preloader)')
+              image_type=${image_type:-unknown}  # Jeśli pusty, ustaw "unknown"
+          
+              # Tworzymy nową nazwę, zachowując squashfs
+              new_name=$(echo "$file" | sed \
+                -e "s/bananapi_bpi-r4/bananapi_bpi-r4-r28863-ab80e6c684_20250220T101733Z/")
+          
+              # Jeśli image_type nie jest pusty, dodajemy go do nazwy
+              if [[ "$image_type" != "unknown" ]]; then
+                new_name="${new_name%.*}-$image_type.${new_name##*.}"
               fi
-
+          
+              # Zmieniamy nazwę pliku
               mv -v "$file" "$new_name"
             fi
           done
