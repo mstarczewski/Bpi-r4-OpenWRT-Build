@@ -136,7 +136,7 @@ jobs:
       - name: 🏭 Build image
         run: |
           cd openwrt
-          BUILD_TIMESTAMP=$(date -d "${{ env.TIMESTAMP }}" +%s)
+          BUILD_TIMESTAMP=$(date -u -d "$(echo ${{ env.TIMESTAMP }} | sed 's/T/ /; s/Z//')" +%s)
           
           make -j ${{ env.BUILD_JOBS }} world \
             REVISION="${{ env.REVISION }}" \
