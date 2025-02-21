@@ -148,9 +148,13 @@ jobs:
         run: |
           cd openwrt/bin/targets/mediatek/filogic
           
-          for file in $(find . -maxdepth 1 -type f); do
-            # Pomijamy pliki znajdujące się w katalogu 'packages'
-            if [[ "$file" == ./packages/* ]]; then
+          REVISION="${{ needs.get_revision.outputs.revision }}"
+          COMMIT_SHA="${{ needs.get_revision.outputs.commit_sha }}"
+          TIMESTAMP="${{ needs.get_revision.outputs.timestamp }}"
+          
+          for file in *; do
+            # Pomijamy katalog 'packages' i jego zawartość
+            if [[ -d "$file" ]] && [[ "$file" == "packages" ]]; then
               continue
             fi
           
@@ -160,7 +164,7 @@ jobs:
               image_type=${image_type:-unknown}
           
               # Tworzymy nową nazwę
-              new_name=$(echo "$file" | sed "s/bananapi_bpi-r4/bananapi_bpi-r4-r28863-ab80e6c684_20250220T101733Z/")
+              new_name=$(echo "$file" | sed "s/bananapi_bpi-r4/bananapi_bpi-r4-${REVISION}-${COMMIT_SHA}_${TIMESTAMP}/")
               new_name="${new_name%.*}-$image_type.${new_name##*.}"
           
               # Zmieniamy nazwę pliku
