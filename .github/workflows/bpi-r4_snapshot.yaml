@@ -148,9 +148,9 @@ jobs:
         run: |
           cd openwrt/bin/targets/mediatek/filogic
           
-          for file in *; do
-            # Pomijamy katalog 'packages' i jego zawartość
-            if [[ -d "$file" ]] && [[ "$file" == "packages" ]]; then
+          for file in $(find . -maxdepth 1 -type f); do
+            # Pomijamy pliki znajdujące się w katalogu 'packages'
+            if [[ "$file" == ./packages/* ]]; then
               continue
             fi
           
