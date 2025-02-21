@@ -7,7 +7,7 @@ env:
   REMOTE_REPOSITORY: openwrt/openwrt
   REMOTE_BRANCH: main
   RELEASE_PREFIX: bpi-r4
-  DEVICE_CONFIG: configs/bpi-r4_config3
+  DEVICE_CONFIG: configs/bpi-r4_config
   BUILD_JOBS: 2
   KEEP_RELEASES: 3
 
