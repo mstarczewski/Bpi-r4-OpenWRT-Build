@@ -1,0 +1,149 @@
+name: 🛠️ Build OpenWRT Bpi-R4 + Release
+
+on:
+  workflow_dispatch:
+
+env:
+  REMOTE_REPOSITORY: woziwrt/bpi-r4-mtk
+  REMOTE_BRANCH: main
+  RELEASE_PREFIX: bpi-r4
+  BUILD_JOBS: 2
+  KEEP_RELEASES: 3
+  DEVICE_CONFIG: configs/bpi-r4_config
+
+jobs:
+  get_revision:
+    name: 🔍 Get OpenWRT Revision
+    runs-on: ubuntu-24.04
+    outputs:
+      revision: ${{ steps.get_revision.outputs.revision }}
+      commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
+      timestamp: ${{ steps.timestamp.outputs.timestamp }}
+    steps:
+      - name: 🛠️ Checkout BPI-R4 Repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.REMOTE_REPOSITORY }}
+          ref: ${{ env.REMOTE_BRANCH }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: 🔄 Update tags
+        run: git fetch --tags -f
+
+      - name: 🔑 Get commit SHA
+        id: get_commit_sha
+        run: echo "commit_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: 🛠️ Run build script
+        run: |
+          chmod +x build-mlo-beta2_ext_upd-1.2-version.sh
+          ./build-mlo-beta2_ext_upd-1.2-version.sh
+
+      - name: 🕒 Generate timestamp
+        id: timestamp
+        run: echo "timestamp=$(date -u +'%Y%m%dT%H%M%SZ')" >> $GITHUB_OUTPUT
+
+  build:
+    name: 🏗️ Build Firmware
+    needs: [get_revision]
+    runs-on: ubuntu-24.04
+    env:
+      REVISION: ${{ needs.get_revision.outputs.revision }}
+      TIMESTAMP: ${{ needs.get_revision.outputs.timestamp }}
+    steps:
+      - name: ⚙️ Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential ccache clang flex bison g++ gawk \
+            gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev \
+            python3-setuptools rsync swig unzip zlib1g-dev file wget curl
+
+      - name: 👀 Verify OpenWRT Source
+        run: ls -lah
+
+      - name: 🔀 Merge Configs
+        run: |
+          cd openwrt
+          # Pobierz dodatkowy config (wcześniej "Apply config")
+          curl -fLSs "https://raw.githubusercontent.com/${{ github.repository_owner }}/Bpi-r4-OpenWRT-Build/master/${{ env.DEVICE_CONFIG }}" > extra.config
+          # Dołącz do istniejącego .config te linie, których tam brakuje
+          grep -vxFf .config extra.config >> .config || true
+          make defconfig
+
+      - name: 🛠️ Custom configuration
+        run: |
+          cd openwrt
+          mkdir -p files/sbin files/etc/profile.d files/etc/uci-defaults
+          wget --tries=3 --timeout=30 --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://raw.githubusercontent.com/${{ github.repository_owner }}/OpenWRT_packages/master/sysinfo/files/sbin/sysinfo.sh" \
+            -O files/sbin/sysinfo.sh || exit 1
+          wget --tries=3 --timeout=30 --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://raw.githubusercontent.com/${{ github.repository_owner }}/OpenWRT_packages/master/sysinfo/files/etc/profile.d/99-sysinfo.sh" \
+            -O files/etc/profile.d/99-sysinfo.sh || exit 1
+          chmod +x files/sbin/sysinfo.sh
+          cat > files/etc/uci-defaults/99-custom-config <<'EOF'
+          uci set wireless.radio0.disabled=0
+          uci commit
+          /etc/init.d/dnscrypt-proxy enable
+          /etc/init.d/dnscrypt-proxy restart
+          /etc/init.d/adblock restart
+          EOF
+
+      - name: 🏭 Build OpenWRT
+        run: |
+          cd openwrt
+          make -j ${{ env.BUILD_JOBS }} world
+
+      - name: 🏷️ Rename and Upload Artifacts
+        run: |
+          cd openwrt/bin/targets/mediatek/filogic
+          mkdir -p ../../artifacts
+          mv * ../../artifacts/
+          
+      - name: 📤 Upload Firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-images
+          path: openwrt/bin/targets/mediatek/filogic/artifacts/*
+
+  release:
+    name: 🚀 Create Release
+    needs: [build, get_revision]
+    if: needs.build.result == 'success'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: 📥 Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware-images
+          path: artifacts
+
+      - name: 🗜️ Prepare release files
+        run: |
+          mkdir -p release_files
+          cp artifacts/* release_files/
+          echo "=== Release files ==="
+          ls -lh release_files/
+
+      - name: 🏷️ Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release_files/*
+          tag_name: ${{ env.RELEASE_PREFIX }}-${{ needs.get_revision.outputs.revision }}
+          name: "openwrt-${{ needs.get_revision.outputs.revision }}_${{ needs.get_revision.outputs.timestamp }}"
+          body: |
+            ### Build Details
+            - **Device:** Banana Pi R4
+            - **Revision:** ${{ needs.get_revision.outputs.revision }}
+            - **Build Date:** ${{ needs.get_revision.outputs.timestamp }}
+            - **Commit:** [${{ needs.get_revision.outputs.commit_sha }}](https://github.com/${{ env.REMOTE_REPOSITORY }}/commit/${{ needs.get_revision.outputs.commit_sha }})
+      - name: 🧹 Clean Old Releases
+        uses: dev-drprasad/delete-older-releases@master
+        with:
+          keep_latest: ${{ env.KEEP_RELEASES }}
+          delete_tags: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
