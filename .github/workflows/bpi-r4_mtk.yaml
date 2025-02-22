@@ -1,4 +1,4 @@
-name: 🛠️ Build OpenWRT Bpi-R4 + Release
+name: 🛠️ Build OpenWRT Bpi-R4 + MTK
 
 on:
   workflow_dispatch:
