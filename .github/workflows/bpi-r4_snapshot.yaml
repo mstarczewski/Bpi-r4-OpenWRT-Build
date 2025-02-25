@@ -5,7 +5,7 @@ on:
 
 env:
   REMOTE_REPOSITORY: openwrt/openwrt
-  REMOTE_BRANCH: v24.10.0 #main
+  REMOTE_BRANCH: main #v24.10.0
   RELEASE_PREFIX: bpi-r4
   DEVICE_CONFIG: configs/bpi-r4_config
   BUILD_JOBS: 2
