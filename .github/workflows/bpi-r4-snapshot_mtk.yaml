@@ -1,5 +1,6 @@
 ---
-name: BPI-R4 + mtk-feed-firmware + EEPROM fix + main_router packages
+# from https://github.com/danpawlik/openwrt-builder/blob/68ccd7ff5b026e409a27efe87b2f42d3ce2c713a/.github/workflows/bpi-r4-mediatek_feed.yaml
+name: BPI-R4 + mtk
 
 on:
   workflow_dispatch:
