@@ -208,4 +208,4 @@ jobs:
           delete_tags: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-Update bpi-r4_snapshot.yaml · mstarczewski/Bpi-r4-OpenWRT-Build@e872ee0 
+
